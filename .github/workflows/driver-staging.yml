@@ -1,0 +1,73 @@
+# Scheduled and manual runs against staging.
+#   Mon-Fri 06:00 UTC  smoke          Tue and Thu 08:00 UTC  regression (smoke + auth + trip, no SMS)
+# smsTest sends REAL SMS messages to the QA phone, so it only runs from a manual dispatch that confirms it.
+name: Driver App — Staging
+
+on:
+  schedule:
+    - cron: '0 6 * * 1-5'
+    - cron: '0 8 * * 2,4'
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: Which tests to run
+        type: choice
+        default: smoke
+        options: [smoke, auth, trip, regression, sms]
+      apk_url:
+        description: APK URL to test (leave empty to use the TMS_APK_URL secret)
+        type: string
+        required: false
+      confirm_sms:
+        description: Required for the sms suite. It sends real SMS messages to the QA phone
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: driver-e2e-staging
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      suite: ${{ steps.p.outputs.suite }}
+      tasks: ${{ steps.p.outputs.tasks }}
+    steps:
+      - id: p
+        run: |
+          if [ "${{ github.event_name }}" == "schedule" ]; then
+            if [ "${{ github.event.schedule }}" == "0 6 * * 1-5" ]; then suite=smoke; else suite=regression; fi
+          else
+            suite="${{ inputs.suite }}"
+          fi
+          if [ "$suite" == "sms" ] && [ "${{ inputs.confirm_sms }}" != "true" ]; then
+            echo "::error::The sms suite sends real SMS messages. Re-run with confirm_sms ticked."
+            exit 1
+          fi
+          case "$suite" in
+            smoke) tasks=smokeTest ;;
+            auth) tasks=authTest ;;
+            trip) tasks=tripTest ;;
+            regression) tasks="regressionTest" ;;
+            sms) tasks=smsTest ;;
+            *) echo "::error::unknown suite $suite"; exit 1 ;;
+          esac
+          echo "suite=$suite" >> "$GITHUB_OUTPUT"
+          echo "tasks=$tasks" >> "$GITHUB_OUTPUT"
+
+  e2e:
+    needs: plan
+    permissions:
+      contents: write # lets the reusable workflow push the redacted dashboard to gh-pages
+    uses: ./.github/workflows/_e2e.yml
+    with:
+      publish: true
+      tasks: ${{ needs.plan.outputs.tasks }}
+      label: ${{ needs.plan.outputs.suite }}
+      apk_url: ${{ inputs.apk_url || '' }}
+      notify: true
+    secrets: inherit

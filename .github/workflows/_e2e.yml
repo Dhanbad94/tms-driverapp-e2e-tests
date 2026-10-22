@@ -1,0 +1,247 @@
+# Reusable: boots an Android emulator, starts Appium, runs the given Gradle test task(s) against the
+# staging APK, builds the custom dashboard, and (optionally) publishes the redacted dashboard + Slack.
+# Called by ci.yml (pull requests) and driver-staging.yml (scheduled / manual).
+name: E2E on emulator (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      tasks:
+        description: Gradle test task(s) to run, space separated (smokeTest, authTest, tripTest, regressionTest, smsTest)
+        type: string
+        required: true
+      label:
+        description: Short name used in artifact names and the dashboard title
+        type: string
+        required: true
+      apk_url:
+        description: APK download URL. Falls back to the TMS_APK_URL secret
+        type: string
+        required: false
+        default: ''
+      env_name:
+        description: Config file under config/environments (staging or development; production is refused)
+        type: string
+        required: false
+        default: staging
+      publish:
+        description: Publish the redacted dashboard to GitHub Pages (also needs the PUBLISH_REPORT repository variable = true)
+        type: boolean
+        required: false
+        default: false
+      notify:
+        description: Send the Slack summary (needs the SLACK_WEBHOOK_URL secret)
+        type: boolean
+        required: false
+        default: false
+    outputs:
+      verdict:
+        value: ${{ jobs.e2e.outputs.verdict }}
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write # push the redacted dashboard to gh-pages when PUBLISH_REPORT is on
+    outputs:
+      verdict: ${{ steps.stats.outputs.verdict }}
+      total: ${{ steps.stats.outputs.total }}
+      passed: ${{ steps.stats.outputs.passed }}
+      failed: ${{ steps.stats.outputs.failed }}
+      skipped: ${{ steps.stats.outputs.skipped }}
+      duration: ${{ steps.stats.outputs.duration }}
+      report_url: ${{ steps.url.outputs.url }}
+    env:
+      CI: true
+      TMS_ENV: ${{ inputs.env_name }}
+      TMS_APK_URL: ${{ inputs.apk_url || secrets.TMS_APK_URL }}
+      TMS_APK_AUTH_HEADER: ${{ secrets.TMS_APK_AUTH_HEADER }}
+      TMS_DRIVER_PHONE: ${{ secrets.TMS_DRIVER_PHONE }}
+      TMS_DRIVER_PASSCODE: ${{ secrets.TMS_DRIVER_PASSCODE }}
+      TMS_DRIVER_ISD: ${{ vars.TMS_DRIVER_ISD }}
+      TMS_DRIVER_COUNTRY: ${{ vars.TMS_DRIVER_COUNTRY }}
+      TMS_TRIP_API_URL: ${{ secrets.TMS_TRIP_API_URL }}
+      TMS_TRIP_AUTH_VALUE: ${{ secrets.TMS_TRIP_AUTH_VALUE }}
+      TMS_TRIP_DRIVER_ID: ${{ secrets.TMS_TRIP_DRIVER_ID }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      # Same versions that were verified locally. Appium 3 needs a newer Node and the 4.x driver line.
+      - name: Install Appium and the UiAutomator2 driver
+        run: |
+          npm install -g appium@2.19.0
+          appium driver install uiautomator2@4.2.9
+          appium driver list --installed
+
+      - name: Enable KVM for the emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Download and verify the staging APK
+        run: bash scripts/ci/fetch-apk.sh
+
+      # The tests were written against a 320x640 @160dpi AVD (see README, "Verification status"), so the
+      # CI emulator is configured the same way. pre-emulator-launch-script runs after the AVD is created.
+      - name: Run tests on the emulator
+        id: e2e
+        continue-on-error: true
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          avd-name: tms_api34
+          ram-size: 2048M
+          force-avd-creation: false
+          emulator-options: -no-window -gpu guest -noaudio -no-boot-anim -no-snapshot
+          disable-animations: true
+          pre-emulator-launch-script: |
+            printf 'hw.lcd.width = 320\nhw.lcd.height = 640\nhw.lcd.density = 160\n' >> ~/.android/avd/tms_api34.avd/config.ini
+          script: bash scripts/ci/run-on-emulator.sh "${{ inputs.tasks }}"
+
+      - name: Build the dashboard (private, with screenshots)
+        if: always()
+        run: |
+          python3 scripts/generate_report.py \
+            --title "TMS Driver App — ${{ inputs.label }}" \
+            --meta-file build/ci-meta.json \
+            --meta "Suite=${{ inputs.tasks }}" \
+            --markdown "$GITHUB_STEP_SUMMARY" \
+            --github-output "$GITHUB_OUTPUT" || true
+        id: stats
+
+      # Failure screenshots can show the QA phone number, so only this variant ever leaves the artifact store.
+      - name: Build the dashboard (redacted, publishable)
+        if: always()
+        run: |
+          python3 scripts/generate_report.py --redact \
+            --title "TMS Driver App — ${{ inputs.label }}" \
+            --meta-file build/ci-meta.json \
+            --meta "Suite=${{ inputs.tasks }}" \
+            --out-dir build/reports/dashboard-public || true
+
+      # Workflow artifacts are readable by anyone who can see the repository. In a private repo the full
+      # evidence (screenshots, page source, logcat) is kept; in a public repo only the redacted dashboard and
+      # the plain test reports are uploaded, because screenshots can show the QA phone number.
+      - name: Upload test evidence (full, private repositories only)
+        if: always() && github.event.repository.private
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-${{ inputs.label }}-${{ github.run_id }}
+          path: |
+            build/reports/dashboard/
+            build/reports/tests/
+            build/allure-results/
+            build/artifacts/
+            build/test-results/
+            build/appium.log
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload test evidence (redacted, public repositories)
+        if: always() && !github.event.repository.private
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-${{ inputs.label }}-${{ github.run_id }}
+          path: |
+            build/reports/dashboard-public/
+            build/reports/tests/
+            build/test-results/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Publish redacted dashboard to GitHub Pages
+        id: pages
+        # Optional: publish input plus the repository variable PUBLISH_REPORT=true. A push race on the shared gh-pages branch
+        # must not fail the run; the report is a side artifact, not the test verdict.
+        if: always() && inputs.publish && vars.PUBLISH_REPORT == 'true' && hashFiles('build/reports/dashboard-public/index.html') != ''
+        continue-on-error: true
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: build/reports/dashboard-public
+          destination_dir: ${{ github.run_id }}-${{ inputs.label }}
+          keep_files: true
+
+      - name: Resolve report URL
+        id: url
+        if: always()
+        run: |
+          run_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          if [ "${{ steps.pages.outcome }}" == "success" ]; then
+            owner="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+            echo "url=https://${owner}.github.io/${{ github.event.repository.name }}/${{ github.run_id }}-${{ inputs.label }}/" >> "$GITHUB_OUTPUT"
+          else
+            echo "url=$run_url" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Reports are always built first; only now does a failed run fail the job.
+      - name: Fail the job if the tests (or the emulator run) failed
+        if: always()
+        run: |
+          if [ "${{ steps.e2e.outcome }}" == "failure" ]; then
+            echo "::error::The emulator step itself failed (boot, Appium or setup). See that step's log."
+            exit 1
+          fi
+          code="$(cat build/ci-exit-code 2>/dev/null || echo missing)"
+          if [ "$code" != "0" ]; then
+            echo "::error::Gradle exited with '$code'. See the dashboard in the run summary and the uploaded artifact."
+            exit 1
+          fi
+
+  notify:
+    needs: e2e
+    if: always() && inputs.notify
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Slack summary
+        continue-on-error: true
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          RESULT: ${{ needs.e2e.result }}
+          TOTAL: ${{ needs.e2e.outputs.total }}
+          PASSED: ${{ needs.e2e.outputs.passed }}
+          FAILED: ${{ needs.e2e.outputs.failed }}
+          SKIPPED: ${{ needs.e2e.outputs.skipped }}
+          DURATION: ${{ needs.e2e.outputs.duration }}
+          URL: ${{ needs.e2e.outputs.report_url }}
+          LABEL: ${{ inputs.label }}
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then echo "Slack webhook not configured, skipping"; exit 0; fi
+          [ -z "$URL" ] && URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          # Pass/fail comes from the parsed failed-count, and anything unparseable counts as a failure.
+          if [[ "$FAILED" =~ ^[0-9]+$ ]] && [ "$FAILED" -eq 0 ] && [ "$RESULT" == "success" ]; then
+            emoji="✅"; color="#36a64f"; head="Driver app tests passed"
+          else
+            emoji="❌"; color="#dc3545"; head="Driver app tests failed"
+          fi
+          payload="$(jq -n --arg color "$color" --arg head "$emoji $head" --arg suite "$LABEL" \
+            --arg total "$TOTAL" --arg passed "$PASSED" --arg failed "$FAILED" --arg skipped "$SKIPPED" \
+            --arg dur "$DURATION" --arg url "$URL" '{attachments:[{color:$color,blocks:[
+              {type:"header",text:{type:"plain_text",text:$head,emoji:true}},
+              {type:"section",fields:[
+                {type:"mrkdwn",text:("*Suite:*\n"+$suite)},
+                {type:"mrkdwn",text:("*Environment:*\nStaging")},
+                {type:"mrkdwn",text:("*Passed:* "+$passed+" / "+$total)},
+                {type:"mrkdwn",text:("*Failed:* "+$failed+"   *Skipped:* "+$skipped)},
+                {type:"mrkdwn",text:("*Test time:* "+$dur)}]},
+              {type:"actions",elements:[{type:"button",text:{type:"plain_text",text:"View report"},url:$url}]}]}]}')"
+          curl -s -X POST -H 'Content-type: application/json' --data "$payload" "$SLACK_WEBHOOK_URL"

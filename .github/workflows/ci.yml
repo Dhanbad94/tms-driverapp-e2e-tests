@@ -1,0 +1,59 @@
+# Pull requests and pushes to main: fast config checks, then the launch smoke test on an emulator.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # No device, no Appium, no secrets: compiles the framework and runs the @config tests.
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+      - run: ./gradlew test
+      - name: Dashboard for the config checks
+        if: always()
+        run: python3 scripts/generate_report.py --title "TMS Driver App — config checks" --markdown "$GITHUB_STEP_SUMMARY" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit-${{ github.run_id }}
+          path: |
+            build/reports/dashboard/
+            build/reports/tests/
+            build/test-results/
+          retention-days: 7  # config checks only: no screenshots, nothing sensitive
+
+  # Needs the TMS_APK_URL secret, which pull requests from forks cannot read, so those skip this job.
+  smoke:
+    needs: unit
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    # One emulator run at a time: every run drives the same staging backend and QA driver account.
+    concurrency:
+      group: driver-e2e-staging
+      cancel-in-progress: false
+    # _e2e.yml declares `contents: write` (gh-pages publishing). A called workflow cannot exceed the caller's
+    # permissions, so this job must grant it even though `publish` is off here.
+    permissions:
+      contents: write
+    uses: ./.github/workflows/_e2e.yml
+    with:
+      tasks: smokeTest
+      label: smoke
+    secrets: inherit

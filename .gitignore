@@ -1,0 +1,16 @@
+.gradle/
+build/
+out/
+.idea/
+*.iml
+apps/
+.env
+*.local.properties
+artifacts/
+allure-results/
+allure-report/
+.playwright-mcp/
+build/reports/
+*.log
+bin/
+__pycache__/
