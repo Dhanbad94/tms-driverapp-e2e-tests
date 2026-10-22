@@ -12,6 +12,14 @@ if [ -z "$url" ]; then
   exit 2
 fi
 
+# Accept a normal Google Drive share link (drive.google.com/file/d/<id>/view, open?id=, uc?id=) and turn it into
+# the direct-download form. A share link returns an HTML viewer page, and large files also need confirm=t.
+drive_id="$(sed -nE 's#^https://drive\.google\.com/(file/d/|open\?id=|uc\?(export=download&)?id=)([A-Za-z0-9_-]+).*#\3#p' <<<"$url")"
+if [ -n "$drive_id" ]; then
+  url="https://drive.usercontent.google.com/download?id=${drive_id}&export=download&confirm=t"
+  echo "Google Drive link detected; using the direct-download form for file id ${drive_id:0:6}..."
+fi
+
 mkdir -p apps build
 out="apps/driver-staging.apk"
 args=(--fail --location --silent --show-error --retry 3 --output "$out")
