@@ -18,6 +18,16 @@ args=(--fail --location --silent --show-error --retry 3 --output "$out")
 [ -n "${TMS_APK_AUTH_HEADER:-}" ] && args+=(--header "$TMS_APK_AUTH_HEADER")
 curl "${args[@]}" "$url"
 
+# An APK is a zip ("PK"). Hosting pages (Google Drive quota/sign-in/virus-scan pages) answer 200 with HTML,
+# so say what actually came back instead of failing later with an opaque aapt2 error.
+if [ "$(head -c 2 "$out")" != "PK" ]; then
+  echo "::error::The download is not an APK ($(stat -c %s "$out") bytes, $(file -b "$out" | cut -c1-60))."
+  title="$(grep -o -i '<title>[^<]*' "$out" | head -1 | sed 's/<title>//I')"
+  [ -n "$title" ] && echo "::error::The server returned a web page titled: $title"
+  rm -f "$out"
+  exit 2
+fi
+
 aapt2="$(ls "${ANDROID_HOME:-$ANDROID_SDK_ROOT}"/build-tools/*/aapt2 2>/dev/null | sort -V | tail -1 || true)"
 if [ -z "$aapt2" ]; then
   echo "::error::aapt2 not found under the Android SDK build-tools"
