@@ -16,6 +16,7 @@ repositories {
 val appiumClient = "9.3.0"
 val junit = "5.11.3"
 val allure = "2.29.0"
+val pioneer = "2.3.0"
 
 dependencies {
     implementation("io.appium:java-client:$appiumClient")
@@ -26,6 +27,7 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:$junit"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("io.qameta.allure:allure-junit5:$allure")
+    testImplementation("org.junit-pioneer:junit-pioneer:$pioneer")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

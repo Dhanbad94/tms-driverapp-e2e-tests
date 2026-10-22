@@ -53,6 +53,7 @@ jobs:
       passed: ${{ steps.stats.outputs.passed }}
       failed: ${{ steps.stats.outputs.failed }}
       skipped: ${{ steps.stats.outputs.skipped }}
+      retried: ${{ steps.stats.outputs.retried }}
       duration: ${{ steps.stats.outputs.duration }}
       report_url: ${{ steps.url.outputs.url }}
     env:
@@ -221,6 +222,7 @@ jobs:
           PASSED: ${{ needs.e2e.outputs.passed }}
           FAILED: ${{ needs.e2e.outputs.failed }}
           SKIPPED: ${{ needs.e2e.outputs.skipped }}
+          RETRIED: ${{ needs.e2e.outputs.retried }}
           DURATION: ${{ needs.e2e.outputs.duration }}
           URL: ${{ needs.e2e.outputs.report_url }}
           LABEL: ${{ inputs.label }}
@@ -234,7 +236,7 @@ jobs:
             emoji="❌"; color="#dc3545"; head="Driver app tests failed"
           fi
           payload="$(jq -n --arg color "$color" --arg head "$emoji $head" --arg suite "$LABEL" \
-            --arg total "$TOTAL" --arg passed "$PASSED" --arg failed "$FAILED" --arg skipped "$SKIPPED" \
+            --arg total "$TOTAL" --arg passed "$PASSED" --arg failed "$FAILED" --arg skipped "$SKIPPED" --arg retried "${RETRIED:-0}" \
             --arg dur "$DURATION" --arg url "$URL" '{attachments:[{color:$color,blocks:[
               {type:"header",text:{type:"plain_text",text:$head,emoji:true}},
               {type:"section",fields:[
@@ -242,6 +244,6 @@ jobs:
                 {type:"mrkdwn",text:("*Environment:*\nStaging")},
                 {type:"mrkdwn",text:("*Passed:* "+$passed+" / "+$total)},
                 {type:"mrkdwn",text:("*Failed:* "+$failed+"   *Skipped:* "+$skipped)},
-                {type:"mrkdwn",text:("*Test time:* "+$dur)}]},
+                {type:"mrkdwn",text:("*Test time:* "+$dur+"   *Retried:* "+$retried)}]},
               {type:"actions",elements:[{type:"button",text:{type:"plain_text",text:"View report"},url:$url}]}]}]}')"
           curl -s -X POST -H 'Content-type: application/json' --data "$payload" "$SLACK_WEBHOOK_URL"

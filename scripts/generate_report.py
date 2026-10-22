@@ -64,6 +64,11 @@ class Case:
     steps: list[Step] = field(default_factory=list)
     shots: list[Path] = field(default_factory=list)
     other_attachments: list[str] = field(default_factory=list)
+    attempts: int = 1     # >1 when @RetryingTest ran the test again
+
+    @property
+    def retried(self) -> bool:
+        return self.attempts > 1
 
     @property
     def case_id(self) -> str:
@@ -114,7 +119,28 @@ def read_junit(results_dir: Path) -> list[Case]:
                 message=message,
                 trace=trace,
             ))
-    return cases
+    return merge_attempts(cases)
+
+
+def merge_attempts(cases: list[Case]) -> list[Case]:
+    """@RetryingTest reports every earlier failed attempt as a skipped entry with the same name, followed by
+    the final result. Collapse them into one case: the last entry decides the status, earlier ones count as
+    attempts (so a test that passed on the second try is 'passed, retried', not passed plus skipped)."""
+    merged: dict[tuple[str, str, str], Case] = {}
+    order: list[tuple[str, str, str]] = []
+    for c in cases:
+        key = (c.suite, c.cls, c.name)
+        if key not in merged:
+            merged[key] = c
+            order.append(key)
+            continue
+        first = merged[key]
+        c.attempts = first.attempts + 1
+        c.seconds += first.seconds
+        if first.status == "failed" and not c.message:
+            c.message = first.message
+        merged[key] = c
+    return [merged[k] for k in order]
 
 
 def parse_steps(raw: list[dict]) -> list[Step]:
@@ -209,6 +235,8 @@ def render(cases: list[Case], meta: dict, args) -> tuple[str, dict]:
     passed = sum(c.status == "passed" for c in cases)
     failed = sum(c.status == "failed" for c in cases)
     skipped = sum(c.status == "skipped" for c in cases)
+    retried = sum(c.retried for c in cases)
+    flaky = sum(c.retried and c.status == "passed" for c in cases)
     executed = passed + failed
     rate = round(100 * passed / executed) if executed else 0
     duration = sum(c.seconds for c in cases)
@@ -263,9 +291,11 @@ def render(cases: list[Case], meta: dict, args) -> tuple[str, dict]:
 
     # failures first, then the rest grouped by area
     def row(c: Case, idx: int) -> str:
-        search = f"{c.case_id} {c.title} {c.area} {c.suite} {' '.join(c.tags)} {c.status}".lower()
+        search = f"{c.case_id} {c.title} {c.area} {c.suite} {' '.join(c.tags)} {c.status}{' retried' if c.retried else ''}".lower()
         icon = {"passed": "✅", "failed": "❌", "skipped": "⏭️"}[c.status]
         tags = "".join(f"<span class='tag'>{esc(t)}</span>" for t in c.tags)
+        if c.retried:
+            tags += f"<span class='tag retry'>retried: {c.attempts} attempts</span>"
         steps = render_steps(c.steps, esc, mask)
         other = ""
         if c.other_attachments and c.status == "failed":
@@ -337,7 +367,8 @@ td{{padding:8px 10px;border-bottom:1px solid #f0f0f0;vertical-align:top}} td.g{{
 .tests{{margin:8px 40px 40px;background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.08);overflow:hidden}}
 tr.area td{{background:#f0f4ff;padding:9px 12px}} .as{{float:right;font-size:12px;color:#666}}
 tr.t{{cursor:pointer}} tr.t:hover{{background:#fafbfc}} td.id{{font-family:monospace;font-size:12px;color:#555;white-space:nowrap}}
-.title .tags{{margin-top:3px}} .tag{{display:inline-block;font-size:10px;padding:1px 7px;margin-right:4px;border-radius:9px;background:#eef2f7;color:#456}}
+.title .tags{{margin-top:3px}} .tag.retry{{background:#fff3e0;color:#b45309;font-weight:600}}
+.tag{{display:inline-block;font-size:10px;padding:1px 7px;margin-right:4px;border-radius:9px;background:#eef2f7;color:#456}}
 tr.d td{{background:#fafbfc;padding:10px 14px 16px}}
 .err{{font:12px monospace;color:#c5221f;background:#fce8e6;padding:7px 10px;border-radius:5px;margin:4px 0;white-space:pre-wrap;word-break:break-word}}
 .note{{font-size:12px;color:#666;margin:6px 0}} pre{{font-size:11px;overflow:auto;max-height:260px;background:#f4f4f4;padding:8px;border-radius:5px;margin-top:6px}}
@@ -356,6 +387,7 @@ li.ok>.ico{{color:#0d9e0d}} li.bad>.ico{{color:#d93025}} li.skip>.ico{{color:#b0
 <div class="card p" data-f="passed"><div class="n">{passed}</div><div class="l">Passed</div></div>
 <div class="card f" data-f="failed"><div class="n">{failed}</div><div class="l">Failed</div></div>
 <div class="card s" data-f="skipped"><div class="n">{skipped}</div><div class="l">Skipped</div></div>
+{f'<div class="card s" data-f="retried"><div class="n">{retried}</div><div class="l">Retried</div></div>' if retried else ''}
 <div class="card r" data-f="all"><div class="n">{rate}%</div><div class="l">Pass rate</div></div>
 <div class="card d" data-f="all"><div class="n">{fmt_dur(duration)}</div><div class="l">Test time</div></div></div>
 <div class="bar" title="passed / failed / skipped">
@@ -369,7 +401,7 @@ li.ok>.ico{{color:#0d9e0d}} li.bad>.ico{{color:#d93025}} li.skip>.ico{{color:#b0
 <section class="panel"><h2>Slowest tests</h2><table><tr><th>ID</th><th>Test</th><th>Time</th></tr>{slow_rows}</table></section></div>
 <div class="controls"><input type="search" id="q" placeholder="Search by ID, title, tag, suite…" aria-label="Search tests">
 <span class="chip active" data-f="all">All</span><span class="chip" data-f="passed">Passed</span>
-<span class="chip" data-f="failed">Failed</span><span class="chip" data-f="skipped">Skipped</span></div>
+<span class="chip" data-f="failed">Failed</span><span class="chip" data-f="skipped">Skipped</span>{'<span class="chip" data-f="retried">Retried</span>' if retried else ''}</div>
 <div class="count" id="count"></div>
 <div class="tests"><table><thead><tr><th width="30"></th><th width="90">ID</th><th>Test (click to expand steps)</th><th width="110">Suite</th><th width="80">Time</th></tr></thead>
 <tbody>{''.join(body_rows)}</tbody></table></div>
@@ -380,7 +412,7 @@ li.ok>.ico{{color:#0d9e0d}} li.bad>.ico{{color:#d93025}} li.skip>.ico{{color:#b0
  function apply(){{
   var shown=0,seen={{}};
   rows.forEach(function(r){{
-   var ok=(f==='all'||r.dataset.status===f)&&(!q||r.dataset.search.indexOf(q)>-1);
+   var ok=(f==='all'||r.dataset.status===f||(f==='retried'&&r.dataset.search.indexOf(' retried')>-1))&&(!q||r.dataset.search.indexOf(q)>-1);
    r.hidden=!ok; var d=document.querySelector('tr.d[data-for="'+r.dataset.i+'"]');
    if(!ok&&d)d.hidden=true; if(ok){{shown++;}}
   }});
@@ -403,7 +435,7 @@ li.ok>.ico{{color:#0d9e0d}} li.bad>.ico{{color:#d93025}} li.skip>.ico{{color:#b0
 
     summary = {
         "verdict": verdict, "total": total, "passed": passed, "failed": failed, "skipped": skipped,
-        "pass_rate": rate, "duration_seconds": round(duration, 1), "meta": meta,
+        "pass_rate": rate, "retried": retried, "passed_on_retry": flaky, "duration_seconds": round(duration, 1), "meta": meta,
         "suites": {k: {"total": len(v), "failed": sum(c.status == "failed" for c in v)} for k, v in by_suite.items()},
         "failures": [{"id": c.case_id, "title": mask(c.title), "suite": c.suite} for c in failures],
     }
@@ -416,6 +448,8 @@ def write_markdown(summary: dict, path: Path, report_url: str) -> None:
              "| Total | Passed | Failed | Skipped | Pass rate | Test time |", "|---|---|---|---|---|---|",
              f"| {summary['total']} | {summary['passed']} | {summary['failed']} | {summary['skipped']} | "
              f"{summary['pass_rate']}% | {fmt_dur(summary['duration_seconds'])} |", ""]
+    if summary.get("retried"):
+        lines += [f"⚠️ {summary['retried']} test(s) needed a retry ({summary['passed_on_retry']} passed on retry).", ""]
     if summary["failures"]:
         lines += ["**Failed tests**", ""] + [f"- `{f['id'] or f['suite']}` {f['title']}" for f in summary["failures"]] + [""]
     if report_url:
@@ -462,7 +496,7 @@ def main() -> int:
         write_markdown(summary, Path(args.markdown), args.report_url)
     if args.github_output:
         with open(args.github_output, "a") as fh:
-            for k in ("verdict", "total", "passed", "failed", "skipped", "pass_rate"):
+            for k in ("verdict", "total", "passed", "failed", "skipped", "pass_rate", "retried"):
                 fh.write(f"{k}={summary[k]}\n")
             fh.write(f"duration={fmt_dur(summary['duration_seconds'])}\n")
     return 1 if (args.fail_on_failures and (summary["failed"] or not cases)) else 0

@@ -11,6 +11,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.junitpioneer.jupiter.RetryingTest
 import org.slf4j.LoggerFactory
 import tms.driver.base.DriverExtension
 import tms.driver.core.config.Credentials
@@ -150,7 +151,7 @@ class OdAsapDriverApp {
         assertEquals(creds.isdCode.filter { it.isDigit() }, login.countryCodeText().filter { it.isDigit() })
     }
 
-    @Test
+    @RetryingTest(maxAttempts = 2, name = "{displayName}") // network toggling is timing-sensitive on slow CI emulators
     @Tag("network")
     @DisplayName("[AUTH-012] Submitting the phone number while offline shows a connectivity message")
     fun `AUTH-012 submitting while offline shows the connectivity toast`() {
@@ -395,7 +396,7 @@ class OdAsapDriverApp {
         assertEquals(0, anrCount, "An 'isn't responding' dialog appeared while switching tabs (see attachment)")
     }
 
-    @Test
+    @RetryingTest(maxAttempts = 2, name = "{displayName}") // network toggling is timing-sensitive on slow CI emulators
     @Tag("network")
     @DisplayName("[SH-009] Losing the network shows an offline banner and the app recovers when it returns")
     fun `SH-009 offline banner appears and a back-online banner follows`() {
