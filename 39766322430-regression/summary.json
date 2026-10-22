@@ -1,11 +1,11 @@
 {
-  "verdict": "FAILED",
+  "verdict": "PASSED",
   "total": 20,
-  "passed": 18,
-  "failed": 1,
+  "passed": 19,
+  "failed": 0,
   "skipped": 1,
-  "pass_rate": 95,
-  "duration_seconds": 536.3,
+  "pass_rate": 100,
+  "duration_seconds": 528.1,
   "meta": {
     "App": "com.trackmyshuttle.driver.staging v2.0.5 (126)",
     "Environment": "staging",
@@ -18,14 +18,8 @@
   "suites": {
     "regressionTest": {
       "total": 20,
-      "failed": 1
+      "failed": 0
     }
   },
-  "failures": [
-    {
-      "id": "AUTH-012",
-      "title": "Submitting the phone number while offline shows a connectivity message",
-      "suite": "regressionTest"
-    }
-  ]
+  "failures": []
 }
