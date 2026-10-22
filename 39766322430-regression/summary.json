@@ -1,0 +1,31 @@
+{
+  "verdict": "FAILED",
+  "total": 20,
+  "passed": 18,
+  "failed": 1,
+  "skipped": 1,
+  "pass_rate": 95,
+  "duration_seconds": 536.3,
+  "meta": {
+    "App": "com.trackmyshuttle.driver.staging v2.0.5 (126)",
+    "Environment": "staging",
+    "Commit": "9ff55109",
+    "Branch": "main",
+    "Trigger": "workflow_dispatch",
+    "Run": "https://github.com/Dhanbad94/tms-driverapp-e2e-tests/actions/runs/39766322430",
+    "Suite": "regressionTest"
+  },
+  "suites": {
+    "regressionTest": {
+      "total": 20,
+      "failed": 1
+    }
+  },
+  "failures": [
+    {
+      "id": "AUTH-012",
+      "title": "Submitting the phone number while offline shows a connectivity message",
+      "suite": "regressionTest"
+    }
+  ]
+}
