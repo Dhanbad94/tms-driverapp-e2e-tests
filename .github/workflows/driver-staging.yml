@@ -1,11 +1,10 @@
 # Scheduled and manual runs against staging.
-#   Mon-Fri 06:00 UTC  smoke          Tue and Thu 08:00 UTC  regression (smoke + auth + trip, no SMS)
+#   Tue and Thu 08:00 UTC  regression (smoke + auth + trip, no SMS): two runs a week
 # smsTest sends REAL SMS messages to the QA phone, so it only runs from a manual dispatch that confirms it.
 name: Driver App — Staging
 
 on:
   schedule:
-    - cron: '0 6 * * 1-5'
     - cron: '0 8 * * 2,4'
   workflow_dispatch:
     inputs:
@@ -40,7 +39,7 @@ jobs:
       - id: p
         run: |
           if [ "${{ github.event_name }}" == "schedule" ]; then
-            if [ "${{ github.event.schedule }}" == "0 6 * * 1-5" ]; then suite=smoke; else suite=regression; fi
+            suite=regression
           else
             suite="${{ inputs.suite }}"
           fi
