@@ -40,6 +40,9 @@ class OdHomeScreen : BaseScreen() {
     fun startButtonText(): String = textOf(startButton)
     fun organisationText(): String = textOf(organisation)
     fun shuttleText(): String = textOf(shuttle)
+    fun tapShuttle() = tap(shuttle)
+    /** The organisation is a link only for accounts with several organisations; on a single-organisation account it is not enabled. */
+    fun isOrganisationEnabled(): Boolean = driver.findElement(organisation).isEnabled
 
     fun emptyTitleText(): String = textOf(emptyState)             // "You have No Trips Assigned"
     fun isEmptyImageShown(): Boolean = waits.isVisibleNow(emptyImage)  // the illustration above the message

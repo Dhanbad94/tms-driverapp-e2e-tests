@@ -326,6 +326,22 @@ Each test assigns one ride (from "Terminal 5E" to "Door 3 - Bus/Shuttle Ctr") be
 
 **[GPS-003] Switching the device's location off during a trip makes the app ask for GPS access** — "Provide GPS Access."
 
+## Shuttle: Home header, Select Shuttle and Rename Shuttle (Phase T9)
+
+**[SHUT-001 / 002 / 004 / 009] Home shows the organisation and shuttle; tapping the shuttle lists both shuttles with seats and driver, and CONFIRM is already on** — the organisation is not a link on a single-organisation account.
+
+**[SHUT-003] Confirming the current shuttle returns Home with the same shuttle.**
+
+**[SHUT-005 / 006] Search narrows the shuttles by part of the name in any case, and says "No match found" otherwise.**
+
+**[SHUT-007] A shuttle held by another driver asks "Belongs to another driver"; PICK ANOTHER keeps the current shuttle** — SELECT ANYWAY is never tapped.
+
+**[SHUT-010 / 011 / 012 / 013] Rename Shuttle opens with the current name, refuses a one-letter name ("Please enter valid name"), stops at 30 characters, and keeps CHANGE off for a blank or unchanged name.**
+
+**[SHUT-014] Renaming the shuttle shows "Shuttle name changed successfully!!" and the new name; renaming it back restores it.**
+
+**[SHUT-015] Renaming while offline does not rename: "Connectivity Issue. Please check your internet connection and try again later", the dialog stays open.**
+
 ## Not automated (decisions)
 
 - Driver-app-disabled dialog (AUTH-009): no disabled account will be provided.
