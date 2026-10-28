@@ -43,8 +43,8 @@ object DispatchAction {
  * | TMS_TRIP_API_URL | Driver API base URL of a NON-production environment, e.g. `https://<host>/driver/api/v3` |
  * | TMS_TRIP_AUTH_VALUE | full Authorization header value for the gateway, `Basic <base64>` (secret) |
  * | TMS_DISPATCHER_PHONE / _ISD / _PASSCODE | a driver account used ONLY for API calls. It must not be the driver signed in on the device: logging the same driver in elsewhere would probably log the app out |
- * | TMS_TRIP_DRIVER_ID | numeric id of the QA driver that rides are assigned to |
- * | TMS_TRIP_RIDER_NAME | the rider name of a ride that is already waiting in the queue |
+ * | TMS_TRIP_DRIVER_ID | numeric id of the QA driver rides are assigned to (optional: taken from the login token when the QA driver is the API account) |
+ * | TMS_DISPATCHER_USE_QA_DRIVER | `true` to use the QA driver's own credentials as the API account |
  */
 class DriverApiConfig(
     val baseUrl: String,
@@ -53,7 +53,6 @@ class DriverApiConfig(
     val dispatcherIsd: String,
     private val dispatcherPasscode: String,
     val assigneeDriverId: Long?,
-    val riderName: String?,
 ) {
     init { requireNonProductionHost(baseUrl) }
 
@@ -76,19 +75,43 @@ class DriverApiConfig(
             }
         }
 
+        /**
+         * Reads the settings. The API account is TMS_DISPATCHER_PHONE / _PASSCODE; when those are not set and
+         * TMS_DISPATCHER_USE_QA_DRIVER=true, the QA driver's own credentials are used instead (this may log the
+         * app out if both are signed in at once, so do the API calls before the app login).
+         */
+        /**
+         * Settings for the SECOND staging driver ("Automation Driver 2"), from TMS_DRIVER2_PHONE / _PASSCODE / _ISD plus the
+         * same host and gateway as the first account. It is used by API calls only and never signed in on the device.
+         */
+        fun forSecondDriverFromEnvironment(): DriverApiConfig? {
+            fun env(name: String) = System.getenv(name)?.takeIf { it.isNotBlank() }
+            val base = env("TMS_TRIP_API_URL") ?: return null
+            val phone = env("TMS_DRIVER2_PHONE")?.filter { it.isDigit() } ?: return null
+            val pass = env("TMS_DRIVER2_PASSCODE") ?: return null
+            return DriverApiConfig(base, env("TMS_TRIP_AUTH_VALUE"), phone, (env("TMS_DRIVER2_ISD") ?: "91").filter { it.isDigit() }, pass, null)
+        }
+
         fun fromEnvironment(): DriverApiConfig? {
             fun env(name: String) = System.getenv(name)?.takeIf { it.isNotBlank() }
             val base = env("TMS_TRIP_API_URL") ?: return null
-            val phone = env("TMS_DISPATCHER_PHONE") ?: return null
-            val pass = env("TMS_DISPATCHER_PASSCODE") ?: return null
+            var phone = env("TMS_DISPATCHER_PHONE")?.filter { it.isDigit() }
+            var isd = (env("TMS_DISPATCHER_ISD") ?: "91").filter { it.isDigit() }
+            var pass = env("TMS_DISPATCHER_PASSCODE")
+            if ((phone == null || pass == null) && env("TMS_DISPATCHER_USE_QA_DRIVER") == "true") {
+                val qa = tms.driver.core.config.Credentials.fromEnvironment() ?: return null
+                phone = qa.phoneDigits()
+                isd = qa.isdCode.filter { it.isDigit() }
+                pass = qa.passcode
+            }
+            if (phone == null || pass == null) return null
             return DriverApiConfig(
                 baseUrl = base,
                 gatewayAuthValue = env("TMS_TRIP_AUTH_VALUE"),
-                dispatcherPhone = phone.filter { it.isDigit() },
-                dispatcherIsd = (env("TMS_DISPATCHER_ISD") ?: "91").filter { it.isDigit() },
+                dispatcherPhone = phone,
+                dispatcherIsd = isd,
                 dispatcherPasscode = pass,
                 assigneeDriverId = env("TMS_TRIP_DRIVER_ID")?.toLongOrNull(),
-                riderName = env("TMS_TRIP_RIDER_NAME"),
             )
         }
     }
@@ -164,12 +187,34 @@ class DriverApiClient private constructor(
 
     private fun action(res: Response) = ActionResult(res.http == 200 && res.code == 200, res.code, res.message)
 
+    /** The logged-in driver's numeric id, read from the token's `result.driver_id` claim (no extra call). */
+    fun driverId(): Long {
+        val payload = token.split('.').getOrNull(1) ?: throw DriverApiException(500, "token is not a JWT")
+        val claims: Map<*, *> = json.toType(String(java.util.Base64.getUrlDecoder().decode(payload.padEnd((payload.length + 3) / 4 * 4, '='))), Map::class.java)
+        return ((claims["result"] as? Map<*, *>)?.get("driver_id") as? Number)?.toLong()
+            ?: throw DriverApiException(500, "token has no driver_id claim")
+    }
+
     /** GET /requests: the unassigned self-serve queue. */
     fun requests(): List<QueuedRequest> {
         val res = call("GET", "/requests")
         if (res.code != 200) throw DriverApiException(res.code, res.message)
-        val rows = res.section("response")["allRequests"] as? List<*> ?: return emptyList()
-        return rows.filterIsInstance<Map<*, *>>().map {
+        return rows(res)
+    }
+
+    /**
+     * The driver's own rides that are still active: GET /ride-requests/2 (assigned) and /3 (in progress).
+     * Used by cleanup to find leftovers without knowing their ids. The shape is the same as GET /requests.
+     */
+    fun myActiveRides(): List<QueuedRequest> = listOf(2, 3).flatMap { type ->
+        val res = call("GET", "/ride-requests/$type")
+        if (res.code != 200) throw DriverApiException(res.code, "ride-requests/$type: ${res.message}")
+        rows(res)
+    }
+
+    private fun rows(res: Response): List<QueuedRequest> {
+        val list = res.section("response")["allRequests"] as? List<*> ?: return emptyList()
+        return list.filterIsInstance<Map<*, *>>().map {
             QueuedRequest(
                 id = (it["id"] as? Number)?.toLong() ?: -1,
                 name = it["name"]?.toString().orEmpty(),
@@ -199,13 +244,31 @@ class DriverApiClient private constructor(
         return AssignResult(res.http == 200 && res.code == 200 && ok >= 1 && failed == 0, res.code, res.message, ok, failed)
     }
 
+    /**
+     * POST /change-driver: moves an already assigned ride to [newDriverId] (what the app's "Assign to another Driver" calls for an
+     * assigned ride). Any driver account of the organisation may send it.
+     */
+    fun changeDriver(dispatchId: Long, newDriverId: Long): ActionResult =
+        action(call("POST", "/change-driver", mapOf("dispatch" to dispatchId, "newDriver" to newDriverId)))
+
     /** POST /dispatch-action: complete (1) or cancel (2). */
     fun dispatchAction(dispatchId: Long, action: Int, reason: String): ActionResult =
         action(call("POST", "/dispatch-action", mapOf("dispatch" to dispatchId, "action" to action, "message" to reason)))
 
+    /**
+     * POST /request-action: complete (1) or cancel (2) a ride that is still UNASSIGNED in the queue.
+     * Confirmed on staging: /dispatch-action refuses an unassigned ride (400 "Invalid request").
+     */
+    fun requestAction(requestId: Long, action: Int, reason: String): ActionResult =
+        action(call("POST", "/request-action", mapOf("id" to requestId, "action" to action, "undo" to false, "message" to reason)))
+
+    /** Cancels a ride whatever its state: unassigned rides use /request-action, assigned ones /dispatch-action. */
+    fun cancelRide(id: Long, reason: String): ActionResult =
+        if (isInQueue(id)) requestAction(id, DispatchAction.CANCEL, reason) else dispatchAction(id, DispatchAction.CANCEL, reason)
+
     /** Best-effort cleanup so a half-finished test never leaves an active ride; errors are swallowed. */
     fun cancelQuietly(dispatchId: Long, reason: String = "E2E teardown") {
-        runCatching { dispatchAction(dispatchId, DispatchAction.CANCEL, reason) }
+        runCatching { cancelRide(dispatchId, reason) }
     }
 
     /**
@@ -215,9 +278,17 @@ class DriverApiClient private constructor(
      */
     fun proceed(): ActionResult = action(call("POST", "/proceed", emptyMap()))
 
+    /** GET /dashboard -> dispatches.count: how many dispatches the logged-in driver currently has. */
+    fun activeDispatchCount(): Int {
+        val res = call("GET", "/dashboard")
+        if (res.code != 200) throw DriverApiException(res.code, res.message)
+        return ((res.section("response")["dispatches"] as? Map<*, *>)?.get("count") as? Number)?.toInt() ?: 0
+    }
+
     /** GET /dashboard -> dispatches.trip_started (0 = not started, 1 = started). */
     fun tripStarted(): Int {
         val res = call("GET", "/dashboard")
+        if (res.code != 200) throw DriverApiException(res.code, res.message)
         return ((res.section("response")["dispatches"] as? Map<*, *>)?.get("trip_started") as? Number)?.toInt() ?: 0
     }
 }

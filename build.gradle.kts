@@ -102,3 +102,13 @@ tasks.register<Test>("regressionTest") {
     configureCommon()
     useJUnitPlatform { includeTags("smoke | auth | trip"); excludeTags("sms") }
 }
+
+// Developer tool, not part of any suite: logs in and saves screenshots / UI dumps of the screens under study.
+tasks.register<Test>("exploreTest") {
+    group = "verification"
+    description = "Runs @explore tests that capture screenshots and UI dumps (nothing is asserted)."
+    testClassesDirs = sourceSets["test"].output.classesDirs
+    classpath = sourceSets["test"].runtimeClasspath
+    configureCommon()
+    useJUnitPlatform { includeTags("explore") }
+}

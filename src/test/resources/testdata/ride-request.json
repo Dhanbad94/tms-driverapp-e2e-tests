@@ -1,0 +1,28 @@
+{
+    "riders": {
+        "name": "Abhishek Dubey",
+        "country": "91",
+        "phone": "5550100000",
+        "total_riders": "5",
+        "ada": true,
+        "note": "Hello",
+        "flight_no": null,
+        "room_no": null
+    },
+    "pickup_stop": {
+        "id": 8030,
+        "place_id": "ChIJw4X9Q4W0D4gRxnMkNqjvIGc",
+        "name": "Automated OD ASAP QA",
+        "address": "811 East Grand Avenue, Bensenville, Illinois, 60106, United States",
+        "latitude": 41.9317035,
+        "longitude": -87.9245815
+    },
+    "dropoff_stop": {
+        "id": 18157,
+        "place_id": "ChIJJdljLia0D4gR3_37NprAZ4o",
+        "name": "Duplicate Stop",
+        "address": "Terminal 2, Chicago, IL 60666, USA",
+        "latitude": 41.977071521573,
+        "longitude": -87.904540300369
+    }
+}

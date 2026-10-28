@@ -26,7 +26,7 @@ class DriverApiClientTest {
     private fun config(gateway: String? = stub.gatewayAuth, passcode: String = stub.goodPasscode) = DriverApiConfig(
         baseUrl = stub.baseUrl, gatewayAuthValue = gateway,
         dispatcherPhone = "9000000001", dispatcherIsd = "91", dispatcherPasscode = passcode,
-        assigneeDriverId = 77, riderName = null,
+        assigneeDriverId = 77,
     )
 
     private fun client() = DriverApiClient.login(config())
@@ -117,6 +117,34 @@ class DriverApiClientTest {
     }
 
     @Test
+    @DisplayName("A ride still waiting in the queue is cancelled with the queue call, an assigned ride with the dispatch call")
+    fun cancelsRidesInEitherState() {
+        stub.enqueueRide(507, "queued"); stub.enqueueRide(508, "assigned")
+        val api = client()
+        api.assign(508, 77)
+        assertEquals(400, api.dispatchAction(507, DispatchAction.CANCEL, "x").code, "the dispatch call must refuse an unassigned ride, like the real API")
+        assertTrue(api.cancelRide(507, "x").ok)
+        assertTrue(api.cancelRide(508, "x").ok)
+        assertEquals(0, stub.queuedCount() + stub.assignedCount())
+    }
+
+    @Test
+    @DisplayName("The dashboard reports how many dispatches the driver has (0, then 1 after an assignment)")
+    fun countsActiveDispatches() {
+        stub.enqueueRide(506, "d")
+        val api = client()
+        assertEquals(0, api.activeDispatchCount())
+        api.assign(506, 77)
+        assertEquals(1, api.activeDispatchCount())
+    }
+
+    @Test
+    @DisplayName("The driver id is read from the login token")
+    fun readsDriverIdFromToken() {
+        assertEquals(77L, client().driverId())
+    }
+
+    @Test
     @DisplayName("Cleanup never throws even when the ride is already gone")
     fun cleanupIsQuiet() { client().cancelQuietly(31337) }
 
@@ -131,7 +159,7 @@ class DriverApiClientTest {
     @Test
     @DisplayName("Credentials never appear when the connection settings are logged")
     fun masksSecrets() {
-        val text = DriverApiConfig("http://127.0.0.1:1/x", "Basic super-secret", "9000000001", "91", "9876", 1, null).toString()
+        val text = DriverApiConfig("http://127.0.0.1:1/x", "Basic super-secret", "9000000001", "91", "9876", 1).toString()
         assertFalse(text.contains("super-secret") || text.contains("9876") || text.contains("9000000001"))
     }
 }

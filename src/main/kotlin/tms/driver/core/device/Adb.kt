@@ -58,6 +58,20 @@ class Adb(private val udid: String? = null, private val adbBinary: String = defa
     fun grant(appPackage: String, permission: String) = run("shell", "pm", "grant", appPackage, permission)
     fun revoke(appPackage: String, permission: String) = run("shell", "pm", "revoke", appPackage, permission)
     fun clearAppData(appPackage: String) = run("shell", "pm", "clear", appPackage)
+    /**
+     * Clears the app's data AND re-grants the permissions the tests rely on. `pm clear` also resets runtime
+     * permissions, which would put system permission prompts over the Login screen.
+     */
+    fun resetAppKeepingPermissions(appPackage: String): Boolean {
+        val cleared = clearAppData(appPackage).ok
+        listOf("android.permission.ACCESS_FINE_LOCATION", "android.permission.POST_NOTIFICATIONS", "android.permission.CAMERA")
+            .forEach { grant(appPackage, it) }
+        return cleared
+    }
+
+    /** Switches the device's location services on or off (API 28+). */
+    fun setLocationEnabled(enabled: Boolean) = run("shell", "cmd", "location", "set-location-enabled", enabled.toString())
+
     fun setWifi(enabled: Boolean) = run("shell", "svc", "wifi", if (enabled) "enable" else "disable")
     fun setMobileData(enabled: Boolean) = run("shell", "svc", "data", if (enabled) "enable" else "disable")
     fun isPackageInstalled(appPackage: String): Boolean =
