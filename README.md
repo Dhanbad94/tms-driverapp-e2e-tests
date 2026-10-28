@@ -74,36 +74,47 @@ export TMS_APK_PATH=/path/to/driver-staging.apk
 allure serve build/allure-results      # if the Allure CLI is installed
 ```
 
-## Trip setup through the Driver API
+## Trip setup through the Rider and Driver APIs
 
-A ride is put in front of the QA driver through the **TMS Driver API**; the contract was taken from the sibling
-Playwright rider-app suite (`ai-tms-riderapp-playwright-e2e-tests/utils/api/driver-client.ts`). Client:
-`src/main/kotlin/tms/driver/backend/DriverApi.kt`; local stub: `src/test/.../StubDriverApiServer.kt`.
+A test ride is created through the **Rider API**, found in the driver queue and assigned to the QA driver through the
+**Driver API** (contract from the Playwright rider-app suite and the product owner), then checked in the app.
+Clients: `src/main/kotlin/tms/driver/backend/RiderApi.kt` and `DriverApi.kt`; local stubs under `src/test/.../backend/`.
 
-| Step | Call | Notes |
+| Step | Call | Confirmed on staging |
 |---|---|---|
-| Log in | `POST /login` | `Authorization: Basic <gateway>` plus `phone_no`, `isd_code`, `passcode` and device fields; returns a Bearer `token` |
-| Find the ride | `GET /requests` | `response.allRequests[]` (`id`, `name`, `status`); poll until the rider's name appears |
-| Assign to the QA driver | `POST /assign-request` | `{requests:[{dispatch, driver}]}`; success is `successCount >= 1` and `failedCount == 0` |
-| Start the trip | `POST /proceed` | by the **assigned** driver; there is no on-demand start endpoint (`/start-trip` is fixed-route only). `GET /dashboard` -> `dispatches.trip_started` goes 0 -> 1 |
-| Finish / clean up | `POST /dispatch-action` | `action` 1 = complete, 2 = cancel, plus a `message` |
+| Create the ride | `POST {rider}/request` with `Authorization: Bearer`, header `token-id: ODASAP`, body from `testdata/ride-request.json` | Yes: `{"code":200,"message":"Request has been added","response":{"ride_code",...,"ride_status":1}}` |
+| (Token) | `POST {rider}/guest-user` with the rider gateway `Basic` header, or a ready Bearer | Bearer path verified; guest-user not exercised |
+| Driver login | `POST {driver}/login` (Basic gateway + phone, isd, passcode, device fields) | Yes: token whose payload has `result.driver_id` |
+| Find the ride | `GET {driver}/requests` | Yes (the staging queue is shared and holds many rides; the unique rider name is the key) |
+| Assign | `POST {driver}/assign-request` | Yes: `successCount 1, failedCount 0` |
+| Dashboard | `GET {driver}/dashboard` -> `dispatches.count`, `.trip_started` | Yes |
+| Cancel | `POST {driver}/dispatch-action` (`action` 2) | Yes: "Dispatch canceled successfully" |
+| Start the trip | `POST {driver}/proceed` by the assigned driver (no on-demand start endpoint) | Not exercised yet |
 
-The API answers HTTP 200 even for failures, so results are judged on the body `code` (401, 400, 422, ...).
+`{rider}` = `https://riderapi-staging.trackmyshuttle.com/rider/api/v1`; `{driver}` = the staging `.../driver/api/v3`.
+Both APIs answer HTTP 200 even for failures, so results are judged on the body `code`.
 
-Creating the ride in the first place is done in the rider app (web UI; its API is `POST .../rider/api/v1/.../request`).
-Only part of that payload is visible in the Playwright suite, so this framework does **not** create rides yet: it expects a
-ride for `TMS_TRIP_RIDER_NAME` to be waiting in the queue.
+**Order matters.** Confirmed by a live run: logging the QA driver in through the **Driver API signs the app out**. So
+`TripLifecycleTest` makes every API call first, logs in to the app afterwards, and does the cleanup (which logs in
+again) last. A separate dispatcher account (`TMS_DISPATCHER_PHONE` / `_PASSCODE`) avoids this; with
+`TMS_DISPATCHER_USE_QA_DRIVER=true` the QA driver's own credentials are used instead.
 
-Safety rules built in: only staging / development / local hosts are accepted (preproduction shares the production
-database and is refused as well, with no override); the dispatcher must be a **different** driver from the one signed in
-on the device, because logging the same driver in elsewhere would probably log the app out; credentials come from
-environment variables only (see `.env.example`; `TMS_TRIP_AUTH_VALUE` is the full `Basic <base64>` header value).
+Each ride gets a **unique rider name** and a **random, different pickup and drop-off** from `testdata/stop-list.json`
+(10 stops); the other rider details (5 guests, ADA, note, phone) come from `testdata/ride-request.json`
+(the template holds a placeholder phone: set `TMS_RIDER_PHONE` to the number that should receive the SMS). **Creating a ride sends SMS messages to the rider phone.** Credentials are
+read from environment variables only (see `.env.example`); only staging / development / local hosts are accepted
+(preproduction shares the production database and is refused, with no override).
 
-- `./gradlew test` runs the client against the stub (14 tests, no device). That proves the client, **not** the real API.
-- `./gradlew tripTest` runs `TripLifecycleTest` (TRIP-001). It is skipped unless the variables above are set and has
-  **not been executed**; its home-screen ids are unverified. Starting the trip from the app UI is still to be built.
-- Not yet checked: the staging API version (the app calls `.../driver/api/v3`, the Playwright suite uses `v1` on
-  preproduction), the staging gateway credential, and a staging dispatcher account with a known numeric driver id.
+- `./gradlew test` runs both clients and the ride fixture against local stubs (43 tests, no device). Findings built in: the Rider API rejects `"note": null` (the key is left out), an unassigned ride is cancelled with `request-action` (assigned ones with `dispatch-action`), and staging refuses a second ride for a driver who already has one waiting to start.
+- `./gradlew tripTest` runs the trip tests on the emulator (TRIP-001, Phase T1 `HomeWithDispatchTest` and Phase T2 `StartTripTest`, Phase T3 `TripViewTest`, Phase T4 `ReachDestinationTest`, Phase T5 `RequestsTabsTest` and `PassengerActionsTest`, Phase T6 `RequestsIntakeTest`, Phase T7 `OperatorEventsTest`, `TwoRidesTest`, `StateLifecycleTest` and `MultiRiderStopTest`; see `docs/trip-lifecycle-test-plan.md`). TRIP-001: **passed against real staging** (2026-10-27). It needs the Rider
+  API, Driver API and QA driver variables, and is skipped otherwise.
+- `./gradlew exploreTest` is a developer tool that saves UI dumps and shows what an API login does to the app session.
+- Home-screen ids confirmed live: `atv_label` ("You have 1 dispatch"), `tv_guest` ("5 Guests"), `tv_ada`, `tv_stops`
+  ("2 Stops"), `btn_go` ("START TRIP", upper case), `tv_org`, `tv_shuttle`.
+- CI: `_e2e.yml` does not yet pass the new variables (`TMS_RIDER_API_URL`, `TMS_RIDER_BEARER`, `TMS_DISPATCHER_USE_QA_DRIVER`
+  or `TMS_DISPATCHER_*`); until it does, the trip suite is skipped there.
+
+Test plan for the full trip lifecycle (117 scenarios, phased): [`docs/trip-lifecycle-test-plan.md`](docs/trip-lifecycle-test-plan.md).
 
 ## Real devices and release builds
 
