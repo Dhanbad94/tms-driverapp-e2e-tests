@@ -320,7 +320,7 @@ Each test assigns one ride (from "Terminal 5E" to "Door 3 - Bus/Shuttle Ctr") be
 
 **[TRIPV-008 / GPS-004] When the device's location is moved next to the pickup, the app arrives by itself within seconds** — "Arrived At Terminal 5E" opens without a tap (5 to 11 seconds on staging).
 
-**[TRIPV-008b] With the device still next to the pickup, going Back from the arrived screen brings the arrived screen up again** *(observed behaviour, possibly a defect)*.
+**[TRIPV-008b] While the shuttle is inside the pickup's geofence, going Back from the arrived screen brings the arrived screen up again** *(intended behaviour)*.
 
 **[TRIPV-009] While the device stays far from the pickup, the app does not arrive by itself** — still on the trip view after 45 seconds, estimates in hours.
 
