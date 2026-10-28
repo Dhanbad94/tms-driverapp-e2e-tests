@@ -1,6 +1,6 @@
 # Driver trip lifecycle — end-to-end test plan
 
-Status: **Phases T1 to T7 are done and passing (T7 with the limits listed in its findings) (two T5 tests are written but skipped until the developer's fix, see below); T6 to T8 are planned only.** Nothing here has been run beyond what is marked *live*.
+Status: **All phases T1 to T8 are done and passing (T7 with the limits listed in its findings; four tests wait on a developer fix or a signed-in second driver) (two T5 tests are written but skipped until the developer's fix, see below); T6 to T8 are planned only.** Nothing here has been run beyond what is marked *live*.
 Scope: the on-demand (ASAP) driver on the staging build, from a ride arriving to the trip being completed, including positive, negative and corner cases.
 
 **How to read the tables**
@@ -37,7 +37,7 @@ Scenario titles are written as a person would say them. IDs are only for traceab
 | Reach destination and completion (ARR) | 19 | | T5 Passenger actions and other tabs (**done**) | 16 |
 | Passenger actions (PAX) | 10 | | T6 Requests intake (UI assignment) (**done**) | 17 |
 | Other Requests tabs (REQ) | 7 | | T7 Real-time, session, lifecycle (**done**, partly blocked) | 24 |
-| Real-time events (RT) | 8 | | T8 Location | 6 |
+| Real-time events (RT) | 8 | | T8 Location (**done**) | 6 |
 | State and lifecycle (STATE) | 6 | | Already done (TRIP-001 covers INT-008, HOME-001) | 2 |
 | | | | Deferred (needs a real device, or optional) | 3 |
 | Location (GPS) | 4 | | Blocked (needs fault injection or a push sender) | 2 |
@@ -178,8 +178,8 @@ Verified live on staging (2026-10-27): ride creation, finding it in the queue, a
 | TRIPV-005 | P | Tapping a rider opens the passenger details | S1, started | Sheet with the name as typed, party size, both stops, the note, and CANCEL and PICK UP; CANCEL closes it. The "..." menu offers Move to Request Queue, Change Drop-off, Assign to another Driver and the rider's phone number | P1 | LIVE (**done in T3**) | T3 |
 | TRIPV-006 | P | "I've Arrived" opens the arrived screen | S1, started | "Arrived At" screen titled with the pickup, headers PICKED UP and NO SHOW, "Seats Occupied 0 / 15", buttons BACK and GO TO NEXT STOP | P0 | LIVE (**done in T3**) | T3 |
 | TRIPV-007 | N | Double-tapping "I've Arrived" opens one arrived screen | S1, started | One screen only: one Back returns to the trip view, a second Back to Home ("Current Trip", "2 Stops to go", CONTINUE TRIP) | P2 | LIVE (**done in T3**) | T3 |
-| TRIPV-008 | C | Moving the device near the pickup makes the app arrive by itself (ETA under 1 minute) | S1, started, mock location near the pickup | The arrived screen opens without a tap, once | P1 | CODE; needs a working ETA | T8 |
-| TRIPV-009 | C | Staying far from the pickup does not trigger arrival | S1, started, mock location far away | Stays on the trip view | P2 | CODE | T8 |
+| TRIPV-008 | C | Moving the device near the pickup makes the app arrive by itself (ETA under 1 minute) | S1, started, mock location near the pickup | The arrived screen opens without a tap, once | P1 | CODE; needs a working ETA | T8 (done) |
+| TRIPV-009 | C | Staying far from the pickup does not trigger arrival | S1, started, mock location far away | Stays on the trip view | P2 | CODE | T8 (done) |
 | TRIPV-010 | C | "Go here instead" lets the driver skip ahead to a later stop | needs two rides: the second added after the trip has started | **Not shown with a single ride** (checked live). Confirmation "Go to: <stop>" then the list updates | P2 | CODE; absence LIVE | T7 (done) |
 | TRIPV-011 | C | Pull to refresh on the trip view reloads it | S1, started | Same two stops; no duplicate | P3 | LIVE (**done in T3**) | T3 |
 | TRIPV-012 | C | Map marker taps and map drawing are not automatable | – | Out of scope (markers are not in the UI tree) | P3 | LIVE (limitation) | not automated |
@@ -271,10 +271,10 @@ All need a **second driver account** (for operator-style API calls) and, for rid
 
 | ID | Type | Scenario | Setup | Expected | Pri | Evidence | Phase |
 |---|---|---|---|---|---|---|---|
-| GPS-001 | P | The location service runs while on duty or driving | S1, started | A foreground location service and its notification exist (checked with adb) | P2 | CODE | T8 |
-| GPS-002 | P | Location points are sent about every 5 seconds during a ride and about every 30 seconds otherwise | S1, started | Needs a backend or log view of what was sent | P2 | CODE | T8 |
-| GPS-003 | N | Turning GPS off mid-trip shows the GPS dialog | S1, started, location off | "Provide GPS Access." appears | P2 | CODE | T8 |
-| GPS-004 | C | A mock location is accepted (the app does not check) | mock location | Point sent as normal | P3 | CODE | T8 |
+| GPS-001 | P | The location service runs while on duty or driving | S1, started | A foreground location service and its notification exist (checked with adb) | P2 | CODE | T8 (done) |
+| GPS-002 | P | Location points are sent about every 5 seconds during a ride and about every 30 seconds otherwise | S1, started | Needs a backend or log view of what was sent | P2 | CODE | T8 partly: upper bound only |
+| GPS-003 | N | Turning GPS off mid-trip shows the GPS dialog | S1, started, location off | "Provide GPS Access." appears | P2 | CODE | T8 (done) |
+| GPS-004 | C | A mock location is accepted (the app does not check) | mock location | Point sent as normal | P3 | CODE | T8 (done, emulator) |
 
 ---
 
@@ -303,7 +303,7 @@ Each phase starts with a short **discovery step** (a read-only UI dump of the ne
 | **T5 (done)** Passenger and dispatch actions; other Requests tabs | Rider details, queue, complete, cancel, reassign; Assigned, In-progress and Completed tabs | PAX-001..010, REQ-001..003, 005..007 | `PassengerDialog`, `MoreOptionsSheet`, `ReasonSheet`, Requests tab objects | Every action ends with the ride in the right tab |
 | **T6 (done)** Requests intake (UI assignment) | Assigning from the Requests tab, sort, search, capacity | INT-001..007, 012..014, 017..023 | `RequestsScreen`, `RequestCard`, confirm bar | A ride can be taken from the queue and driven to completion |
 | **T7 (done, partly blocked)** Real-time events, session and lifecycle | Operator and rider events, restarts, offline, sign-in elsewhere, rides added after the trip has started | INT-009..011, 015, 016, HOME-004, 009, 011, TRIPV-010, ARR-015, 016, RT-001..007, REQ-004, STATE-001..004, 006 | A **second driver** client for operator actions, rider cancel call | Each event is seen in the app within its stated time |
-| **T8** Location | Location service, mock location, auto-arrival | TRIPV-008, 009, GPS-001..004 | adb location helpers, ETA observation | Auto-arrival works or is documented as not testable |
+| **T8 (done)** Location | Location service, mock location, auto-arrival | TRIPV-008, 009, GPS-001..004 | adb location helpers, ETA observation | Auto-arrival works or is documented as not testable |
 
 **Counts.** The phase column of the tables adds up to the 117 scenarios in the Summary (including the 2 already done, 2 blocked and 1 not automatable). Five scenarios moved from T1, T3 and T4 to T7 after T1 showed that a second ride cannot be assigned before the trip has started.
 
@@ -382,3 +382,12 @@ Each phase starts with a short **discovery step** (a read-only UI dump of the ne
 - **Largest party (INT-022):** the Rider API accepts 1 to 75 guests; 0 and 76 or more answer 400. A 75-guest ride shows "75" on its card with both buttons, and taking it gives the capacity dialog.
 - **Off duty (INT-023):** switching duty OFF changes Home (a SIGN OUT button appears) but does not stop the driver: the Requests tab opens, the ride is listed, ASSIGN TO SELF stages it and CONFIRM opens the trip view. **Confirmed as intended by the product owner:** an off-duty driver may take rides, and starting the trip marks the driver ON duty (the test checks Home reads ON afterwards).
 - **Assigning to Automation Driver 2 (PAX-009, INT-007):** still not offered in the Assign Driver list on the emulator, even with the account on duty and reported open in another app. A second emulator was not possible: the first one alone holds about 5 GB of the 15 GB host. Both tests stay written and skipped until the list shows the driver. Note: every API login of Driver 2 (the operator tests, status checks) signs out its session on the other device, which may be why it is not listed when the tests run.
+
+## Findings from Phase T8 (live, staging, emulator, 2026-10-28)
+- **Auto-arrival works.** The app posts its position, the server works out the time to the current stop, and the app opens the arrived screen by itself once that is under a minute. Moving the emulator's GPS next to the pickup (`adb emu geo fix`) made the "Arrived At Terminal 5E" screen open 5 to 11 seconds later. With the device far away (estimates of 123 hours) it never arrives, even after 45 seconds (TRIPV-009).
+- **It arrives again after Back.** With the device still next to the stop, going Back from the arrived screen to the trip view brings the arrived screen up again within 40 seconds. The code has a "first time only" flag that is reset when the screen is recreated, so the driver cannot stay on the trip view while at the stop. This may be a defect; the test (TRIPV-008b) records the observed behaviour.
+- **Location service (GPS-001):** during a trip `LocationService` is a foreground service (`isForeground=true`, id 111) with its notification on the channel `TMS_my_location`. `dumpsys notification` did not list it by package, so the check uses the service record.
+- **GPS off during a trip (GPS-003):** switching location services off shows "Provide GPS Access." within a minute, with the same text as at trip start.
+- **Positions are accepted from a mock source (GPS-004):** the emulator's injected position is used as normal (no mock check).
+- **GPS-002 (how often positions are sent)** cannot be read from the device or logcat on this build; the arrival within seconds of a move only shows the upper bound. A backend or socket log would be needed.
+- Real devices and release builds are still untested: moving a real device's position needs a mock-location app instead of `geo fix`.

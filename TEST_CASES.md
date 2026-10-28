@@ -314,6 +314,18 @@ Each test assigns one ride (from "Terminal 5E" to "Door 3 - Bus/Shuttle Ctr") be
 
 **[INT-023] An off-duty driver can see and take a waiting ride, and starting the trip puts the driver back on duty.**
 
+## Location during a trip (Phase T8)
+
+**[GPS-001] While a trip runs, the app keeps a foreground location service with its notification.**
+
+**[TRIPV-008 / GPS-004] When the device's location is moved next to the pickup, the app arrives by itself within seconds** — "Arrived At Terminal 5E" opens without a tap (5 to 11 seconds on staging).
+
+**[TRIPV-008b] With the device still next to the pickup, going Back from the arrived screen brings the arrived screen up again** *(observed behaviour, possibly a defect)*.
+
+**[TRIPV-009] While the device stays far from the pickup, the app does not arrive by itself** — still on the trip view after 45 seconds, estimates in hours.
+
+**[GPS-003] Switching the device's location off during a trip makes the app ask for GPS access** — "Provide GPS Access."
+
 ## Not automated (decisions)
 
 - Driver-app-disabled dialog (AUTH-009): no disabled account will be provided.

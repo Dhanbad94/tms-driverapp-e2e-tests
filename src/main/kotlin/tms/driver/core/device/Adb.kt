@@ -72,6 +72,9 @@ class Adb(private val udid: String? = null, private val adbBinary: String = defa
     /** Switches the device's location services on or off (API 28+). */
     fun setLocationEnabled(enabled: Boolean) = run("shell", "cmd", "location", "set-location-enabled", enabled.toString())
 
+    /** Moves the EMULATOR's GPS to a point (emulator console `geo fix`; it takes longitude first). Real devices need a mock-location app instead. */
+    fun setEmulatorLocation(latitude: Double, longitude: Double) = run("emu", "geo", "fix", longitude.toString(), latitude.toString())
+
     fun setWifi(enabled: Boolean) = run("shell", "svc", "wifi", if (enabled) "enable" else "disable")
     fun setMobileData(enabled: Boolean) = run("shell", "svc", "data", if (enabled) "enable" else "disable")
     fun isPackageInstalled(appPackage: String): Boolean =
