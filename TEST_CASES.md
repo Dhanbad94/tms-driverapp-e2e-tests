@@ -362,6 +362,28 @@ Each test assigns one ride (from "Terminal 5E" to "Door 3 - Bus/Shuttle Ctr") be
 
 **[NOTIF-002 / LOG-001] Nothing on Home, Ride Requests, Profile or Help leads to Notifications or a Dispatch Log** — the Requests toolbar icon goes back to Home.
 
+## Map tab, Change Drop-off, operator on the trip view, profile photo (Phase T12)
+
+**[MAP-001 / MAP-004] The Map tab shows the destination card, and I've Arrived on it opens the Arrived screen at once.**
+
+**[MAP-003] Tapping the rider on the Map tab opens the rider sheet.**
+
+**[MAP-005] Dragging the map shows RE-CENTER, and tapping it hides the button again.**
+
+**[DROP-001 / DROP-002] Change Drop-off opens with UPDATE off, says "No match found" for a bad search, and turns UPDATE on once a stop is chosen.**
+
+**[DROP-003] Opening Change Drop-off without a network drops the driver on Home, with only the offline banner.**
+
+**[DROP-004] Pressing UPDATE without a network changes nothing and gives no message.**
+
+**[DISP-001 / 003 / 004] When the operator cancels, completes or moves ride B while the driver is on the trip view, the route drops its stop within seconds and no "Dispatch ..." sheet appears.**
+
+**[PROF-001] The camera icon on Edit Profile opens a sheet with Camera and Gallery only, and Back closes it.**
+
+**[PROF-002] Refusing the camera permission does nothing and says nothing.**
+
+**[PROF-003] Delete Account asks twice; answering NO keeps the account and the driver signed in.**
+
 ## Not automated (decisions)
 
 - Driver-app-disabled dialog (AUTH-009): no disabled account will be provided.

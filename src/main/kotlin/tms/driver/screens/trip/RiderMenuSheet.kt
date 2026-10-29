@@ -47,12 +47,15 @@ class ChangeDropoffScreen : BaseScreen() {
     fun dropoffName(): String = textOf(currentDropoff)
     fun searchHint(): String = textOf(searchField)          // "Select - Search Drop-off"
     fun updateText(): String = textOf(update)               // "UPDATE"
+    fun isUpdateEnabled(): Boolean = driver.findElement(update).isEnabled
+    fun noMatchShown(): Boolean = waits.appears(By.xpath("//*[@text='No match found']"), Duration.ofSeconds(4))
     fun cancelText(): String = textOf(cancel)               // "CANCEL"
 
     /** Opens the search and types [query]; returns the names of the stops offered. */
     fun search(query: String): List<String> {
-        tap(searchField)
-        waits.visible(searchInput).also { it.click(); it.sendKeys(query) }
+        // The first search replaces the field with the search box; a later search reuses the box that is already open.
+        if (driver.findElements(searchInput).none { runCatching { it.isDisplayed }.getOrDefault(false) }) tap(searchField)
+        waits.visible(searchInput).also { it.click(); it.clear(); it.sendKeys(query) }
         Thread.sleep(2_000)
         return driver.findElements(resultName).map { it.text }
     }

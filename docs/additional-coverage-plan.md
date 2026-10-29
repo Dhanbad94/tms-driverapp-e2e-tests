@@ -1,6 +1,6 @@
 # Additional coverage plan: what the ASAP-mode source still offers (Phases T9 to T12)
 
-Status: **Phases T9, T10 and T11 are done and passing (2026-10-28/29); T12 is planned only.** Decisions taken: renaming and restoring shuttles is allowed, Shuttle-2 is the "other" shuttle, and video playback is skipped.
+Status: **Phases T9 to T12 are done and passing (2026-10-28/29), except T12d (tracker-state combinations, to be checked against T2) and T12f (View Timeline and Select Organisation, to be read).** Decisions taken: renaming and restoring shuttles is allowed, Shuttle-2 is the "other" shuttle, and video playback is skipped.
 Source: a read of the on-demand (ASAP) code of the Driver app (`app/src/main/java/com/trackmyshuttle/driver` and `res`), 2026-10-28.
 The statements about the source below come from that read and from spot checks of the three biggest claims (Dispatch Log has no entry point, the Notifications tab is hidden, Help opens a Compose screen). Anything marked **CONFIRM** must be checked on the running app before an assertion is written.
 
@@ -149,6 +149,27 @@ Source: a read of the ASAP-mode code for the map tab, stop info, Mark Arrived, t
 | PROF-003 | N | Delete Account asks twice and No keeps the account | S0 | Sheet, then "Delete Account?" with Yes and No; No leaves the driver signed in | CODE | P1 | T12e |
 | PROF-004 | P | Gallery > crop > save changes the photo | image pushed to the emulator | Stretch goal: the Android photo picker is slow and fragile | CODE | P3 | T12e (stretch) |
 
+### 5.4 T12 result (live, staging, emulator, 2026-10-29)
+14 new tests in three classes, all passed (`MapAndDropoffTest` 6, `OperatorOnTripViewTest` 3, `ProfilePhotoTest` 3, plus the page objects they share). The Driver 2 session-out during the operator test was accepted by the user.
+
+| Scenarios | Result |
+|---|---|
+| **MAP-001, 004** | Done. The Map tab card shows the stop, its address, an estimate in hours ("123 hr 56 min" far away), the rider chip with the party size and "I've Arrived"; the list cards are gone. "I've Arrived" on the map opens the Arrived screen at once, without a confirmation. |
+| MAP-003 | Done. Tapping the rider on the card opens the rider sheet (name, guests, stops, note, PICK UP). |
+| MAP-005 | Done. Dragging the map shows RE-CENTER; tapping it hides the button. |
+| MAP-002 | Not tested: when the estimate reads "Arrived" the app already leaves for the Arrived screen. |
+| **DROP-001, 002** | Done. UPDATE is off when Change Drop-off opens and when a search finds nothing ("No match found"); choosing a stop turns it on; CANCEL returns to the trip view unchanged. A second search reuses the open search box. |
+| **DROP-003** | Done. With no network, opening Change Drop-off drops the driver on **Home** ("Current Trip", CONTINUE TRIP) with only the "You are Offline" banner and no message. |
+| **DROP-004** | Done. With no network, UPDATE leaves the screen on Change Drop-off with "You are Offline" and **no message**; the trip keeps its old drop-off. (The silent failure is a question for the developers.) |
+| **DISP-001, 003, 004** | Done, with a different outcome than the source suggested. When the second driver cancels, completes or moves ride B while the driver is on the trip view, **no "Dispatch canceled / completed / has changed" sheet appears on staging**: the route just drops ride B's stop within 0 to 1 seconds. The sheets are only shown for socket alerts that the server did not send for these driver-API actions (it may send them for actions from the dispatcher console). The tests fail if a sheet starts to appear. |
+| DISP-002, 005 | Not produced (no sheet to test on the Arrived screen or to close). |
+| DISP-006 | Blocked: the operator cannot end the already-started last ride. |
+| **PROF-001** | Done. The camera icon opens a sheet with exactly Camera and Gallery; Back closes it. |
+| **PROF-002** | Done. With the camera permission taken away (which **restarts the app**) the Camera option shows the system dialog "Allow ... to take pictures and record video?" with While using the app / Only this time / Don't allow; Don't allow returns to Edit Profile with no message. |
+| **PROF-003** | Done, never deleting. The Edit Profile toolbar menu offers "Delete Account"; the alert reads "Delete Account? Are you sure you want to delete your account?" with "YES, DELETE" and "NO"; NO closes the alert and the driver stays signed in. |
+| PROF-004 | Not done (stretch): gallery upload through the Android photo picker. |
+| Hand-over rule | ride B can only be handed over with the **same pickup** as ride A's running trip; a different pickup answered 500 "Something went wrong". |
+
 ### 5.3 Parts and size
 
 | Part | What | Tests (est.) | Needs |
@@ -192,6 +213,6 @@ Decisions for T12 (open):
 | **T9 (done)** | Home header, Select Shuttle, Rename Shuttle | 7 tests (11 scenarios) | done |
 | **T10 (done)** | Help Center, Support, tours | 6 tests (7 scenarios) | done |
 | **T11 (done)** | Negative checks for Notifications and Dispatch Log | 2 tests | product answers pending |
-| **T12** | Dispatch sheets, Map tab, Change Drop-off errors, tracker combinations, photo and Delete Account | about 12 to 17 | decisions in section 7 |
+| **T12 (done, d and f open)** | Dispatch sheets, Map tab, Change Drop-off errors, photo and Delete Account | 12 tests (14 scenarios) | tracker combinations (T12d) and View Timeline (T12f) still open |
 
 Total new: about 15 to 19 tests. After each phase the usual rules apply: an exploration run to record the screens, then assertions only on what was observed, cleanup that restores state, one report per phase, and nothing committed until asked.

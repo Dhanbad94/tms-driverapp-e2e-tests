@@ -62,6 +62,25 @@ class TripViewScreen : BaseScreen() {
         texts.chunked(2).filter { it.size == 2 }.map { RiderChip(it[0], it[1].trim().toInt()) }
     }
 
+    // --- Map tab: a header card at the top (destination, address, estimate, riders, I've Arrived) over the Google map
+    fun mapAddress(): String = textOf(Ids.by("atv_stop_address"))
+    /** "123 hr 56 min", "45 min" or "Arrived" under a minute. */
+    fun mapEstimatedTime(): String = textOf(Ids.by("atv_estimated_time"))
+    fun mapRiderChips(): List<RiderChip> = driver.findElements(Ids.by("rv_riders")).firstOrNull()?.findElements(By.className("android.widget.TextView"))?.map { it.text }
+        ?.chunked(2)?.filter { it.size == 2 && it[1].trim().toIntOrNull() != null }?.map { RiderChip(it[0], it[1].trim().toInt()) } ?: emptyList()
+    fun tapMapRider(): RiderDetailsSheet { tap(Ids.by("rv_riders")); return RiderDetailsSheet().waitUntilShown() }
+
+    /** Drags the map sideways, which makes the RE-CENTER button appear. */
+    fun dragMap() {
+        val size = driver.manage().window().size
+        driver.executeScript("mobile: swipeGesture", mapOf("left" to size.width / 4, "top" to size.height / 2, "width" to size.width / 2, "height" to size.height / 6, "direction" to "left", "percent" to 0.6))
+        Thread.sleep(1_500)
+    }
+    fun isRecenterShown(): Boolean = waits.appears(Ids.by("atv_reset"), Duration.ofSeconds(4))
+    fun recenterText(): String = textOf(Ids.by("atv_reset"))        // "RE-CENTER"
+    fun tapRecenter() = tap(Ids.by("atv_reset"))
+    fun waitUntilRecenterGone(): Boolean = waits.gone(Ids.by("atv_reset"), Duration.ofSeconds(8))
+
     fun openMap() = tap(mapTab)
     fun openList() = tap(listTab)
     fun isMapShown(): Boolean = waits.isVisibleNow(destination)
