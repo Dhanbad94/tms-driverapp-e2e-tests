@@ -105,9 +105,62 @@ Estimated tests: 6 to 7.
 
 These tests pass today because the screens are unreachable. If the product owner decides they should be reachable (question 1 and 2 in section 6), these are the tests that fail and become real scenarios (the source describes the Dispatch Log's list, its search from 2 characters, its confirm bar and its empty text "No Dispatches Found within last 24 hours").
 
-## 5. Phase T12: items still to read in the source (not yet planned)
+## 5. Phase T12: the second source read (plan, nothing automated yet)
 
-The first read did not cover these ASAP-mode areas. They get a second read before any scenario is written: the **MAP VIEW** tab (`TrackerMapFragment`), the **stop info** dialog, the **Mark Arrived** bottom dialog (when it appears for manual versus automatic arrival), the **dispatch cancel/complete** dialogs (whether they differ from the Requests-card flows already tested), the **tracker state** dialogs' texts, the passenger **change drop-off** failure message, and the profile **photo** picker (permissions; likely not automatable on an emulator).
+Source: a read of the ASAP-mode code for the map tab, stop info, Mark Arrived, the dispatch cancel/complete dialogs, tracker-state dialogs, Change Drop-off failures, the profile photo, the review sheets and everything else a driver can reach (2026-10-29). Statements come from that read and are marked **CONFIRM** where only the live app can settle them.
+
+### 5.1 What the read found
+
+| Area | Finding | Plan |
+|---|---|---|
+| **Dispatch cancel / complete dialogs** | Opened **only by socket alerts**, never by a tap, and only on the trip view, the Arrived screen, Change Drop-off and Assign Driver (not on Home, which is why the T7 tests saw no sheet). Texts: "Dispatch completed for:", "Dispatch canceled for:", "Dispatch has changed for:" (cancel dialog, shows the old and new stop, button OK, closes by itself after 6 seconds) and, when the last dispatch ends, "Operator marked dispatch complete.", "Your last dispatch got cancelled. Your trip is now complete.", "Operator assigned the dispatch to another driver. Your trip is now complete." (complete dialog, button "Back To Home"). | **Automatable** with the two-ride setup from T7: ride B has not started, so the second driver may cancel, complete or move it while the QA driver is on the trip view (T12a). |
+| **Map tab** | A header card at the top (not a bottom card): destination, address, estimated time ("Arrived" under a minute, otherwise "N min" / "H hr M min"), rider chips, "I've Arrived", and a **Re-center** button that appears after the driver moves the map. Tapping a chip opens the rider sheet. | **Automatable** apart from the map picture itself (T12b). |
+| **Stop info dialog** | Opens only by tapping a stop **marker on the Google map**; the map content is not in the accessibility tree. It shows "Go here now" only if the server sets `changeToNext`. | **Not automatable** from the UI tree. Listed for the developer. |
+| **Mark Arrived dialog** | **Dead code**: nothing ever shows it. Arrival is "I've Arrived" (manual, no confirmation) or the automatic arrival under one minute (both call `mark-arrived`). | No test; documented. |
+| **Tracker-state dialogs** | Seven single dialogs and an "Alerts" dialog with 11 combinations (unplugged, other driver, too small, ADA). "Belongs to another driver" is tested (T9); the others depend on the shuttle setup and the ride's needs. | T12d: **check what T2 already covers**, then add only the missing combinations. |
+| **Change Drop-off errors** | UPDATE starts off and turns on once a stop is chosen (and never off again, even for the same stop as the pickup). Search has no minimum length; "No match found" for no match. **If the list cannot load, the app silently returns to the trip view; if UPDATE fails the error is ignored and the screen just stays: no message at all.** | T12c: tests that record this (possible defect, see section 6). |
+| **Profile photo** | Edit Profile > camera icon > sheet with **Camera** and **Gallery** only (no remove option); the X on the sheet has no handler (dismiss by Back). Denied camera permission does nothing and says nothing. Crop screen "Crop Photo", 1:1, then compressed to 200x200. Size check "File size should be less than 1 Mb" (only triggers at 2 MB or more). | T12e: open the sheet and check the options; the photo upload itself is a stretch goal. |
+| **Delete Account** | Edit Profile toolbar menu > "Delete Account" > alert "Delete Account?" with Yes and No. | T12e: open the alert and choose **No** only. |
+| **Trip completed / review sheets** | Variants already seen in T4. Not seen: the plain "Trip completed" dialog (only when no request is waiting or the operator bypass is off) and the Review sheet's X (it closes like LATER). | The plain variant cannot be produced on the shared queue (always requests waiting). The X is a small add-on to T4's flow. |
+| **Other reachable items** | Passenger info menu (covered), Confirm Shuttle dialog (covered in T2), Change Passcode (covered), View Timeline and the Select Organisation flow (not read in detail). | T12f: read View Timeline once more. |
+
+### 5.2 Scenarios
+
+| ID | Type | Scenario | Setup | Expected | Evidence | Pri | Part |
+|---|---|---|---|---|---|---|---|
+| DISP-001 | C | The operator cancels a not-yet-started ride while the driver is on the trip view | two rides, A started and B waiting, app on the trip view, 2nd driver cancels B | A bottom sheet "Dispatch canceled for:" with the old stop, OK, closing by itself after 6 seconds; the trip carries on with ride A | CODE | P1 | T12a |
+| DISP-002 | C | The same while the driver is on the Arrived screen | as above, on the Arrived screen | Same sheet, Arrived screen refreshed | CODE | P2 | T12a |
+| DISP-003 | C | The operator completes ride B | as DISP-001, 2nd driver completes B | "Dispatch completed for:" sheet | CODE | P2 | T12a |
+| DISP-004 | C | The operator moves ride B to another driver | as DISP-001, `change-driver` | "Dispatch has changed for:" sheet with the old and new stop | CODE | P2 | T12a |
+| DISP-005 | C | OK closes the sheet at once | DISP-001 | Sheet gone before 6 seconds | CODE | P3 | T12a |
+| DISP-006 | C | The last ride ending shows "Your trip is now complete" and Back To Home | needs the **last** dispatch to end by the operator | Not reachable: the running ride cannot be ended by the operator | CODE | – | blocked |
+| MAP-001 | P | The Map tab shows the destination card: stop name, address, estimated time and "I've Arrived" | S1, started | Card texts as the list; the list cards are gone | CODE; T3 covered the name | P1 | T12b |
+| MAP-002 | P | The estimated time reads "H hr M min" far away and "Arrived" next to the stop | S1, started, GPS far then at the stop | Texts change | CODE; location helper exists (T8) | P2 | T12b |
+| MAP-003 | P | Tapping a rider chip on the Map tab opens the rider sheet | S1, started, Map tab | Sheet with name and party | CODE | P2 | T12b |
+| MAP-004 | P | "I've Arrived" on the Map tab opens the Arrived screen at once, without a confirmation | S1, started, Map tab | Arrived screen for the pickup | CODE | P1 | T12b |
+| MAP-005 | C | After the driver drags the map, Re-center appears; tapping it hides it | S1, started, swipe on the map | Button appears then goes | CODE; gesture on a map (**CONFIRM**) | P3 | T12b |
+| DROP-001 | N | UPDATE is off when Change Drop-off opens | S1 started | Disabled until a stop is picked | LIVE (button seen) | P1 | T12c |
+| DROP-002 | N | A search with no match says "No match found" | Change Drop-off | Text shown, UPDATE still off | CODE | P2 | T12c |
+| DROP-003 | C | Opening Change Drop-off offline: the list cannot load | S1, airplane mode | The app returns to the trip view with no message | CODE | P3 | T12c |
+| DROP-004 | C | UPDATE offline: nothing happens and no message | S1, stop chosen, offline | Screen stays, no toast (records the missing message) | CODE | P3 | T12c |
+| TRK-001 | C | Choosing a shuttle that is both held by another driver and too small / not ADA shows the "Alerts" list | S1 start trip with a 12-guest ADA ride, choose Shuttle-2 | Alerts: Belongs to another driver, Shuttle too small, Requires ADA | CODE; **check T2 first** | P2 | T12d |
+| PROF-001 | P | The camera icon on Edit Profile opens a sheet with Camera and Gallery only | S0 | Two options, no remove option; Back closes it | CODE | P2 | T12e |
+| PROF-002 | C | Denied camera permission does nothing and says nothing | permission revoked | No crash, no message | CODE | P3 | T12e |
+| PROF-003 | N | Delete Account asks twice and No keeps the account | S0 | Sheet, then "Delete Account?" with Yes and No; No leaves the driver signed in | CODE | P1 | T12e |
+| PROF-004 | P | Gallery > crop > save changes the photo | image pushed to the emulator | Stretch goal: the Android photo picker is slow and fragile | CODE | P3 | T12e (stretch) |
+
+### 5.3 Parts and size
+
+| Part | What | Tests (est.) | Needs |
+|---|---|---|---|
+| **T12a** | Dispatch cancel / complete / changed sheets on the trip view and the Arrived screen | 3 to 4 | Driver 2 as operator (signs out its other-app session) |
+| **T12b** | Map tab card, chip, I've Arrived, Re-center | 3 to 4 | none |
+| **T12c** | Change Drop-off validation and silent failures | 3 to 4 | none |
+| **T12d** | Tracker-state combinations | 0 to 2 | check T2 first |
+| **T12e** | Photo sheet, camera permission, Delete Account (No only) | 3 | decisions 4 and 5 |
+| **T12f** | One more read: View Timeline, Select Organisation | to be sized | none |
+
+Total new: about 12 to 17 tests. Four things stay out: the Stop Info dialog (map markers are not in the accessibility tree), the Mark Arrived dialog (dead code), DISP-006 (cannot end the last ride), and the plain "Trip completed" dialog.
 
 ## 6. Questions for the product owner and the developers
 
@@ -115,13 +168,22 @@ The first read did not cover these ASAP-mode areas. They get a second read befor
 2. **Notifications:** the tab is hidden and the screen shows an "under development" picture. Is it planned for this release?
 3. **Possible defects (not tests):** the unused side menu wires "Help" to Change Passcode; `ChangeShuttleFragment` is never opened; the Dispatch Log status bar has no text (`dispatch_status`); `NotificationsFragment` builds its adapter only when the list is empty.
 4. Does the server block changing the shuttle during a running trip? (SHUT-008)
-5. Texts of the tracker-state dialogs, and which setup produces each one. (SHUT-007)
+5. Texts of the tracker-state dialogs: now read from the source (see 5.1); the live setup for each is still to check.
+6. **Silent failures in Change Drop-off:** if the stop list cannot load the app returns to the trip view with no message, and a failed UPDATE shows nothing. Intended?
+7. **Dead code to clean up:** the Mark Arrived dialog, the map's "shuttle location" banner, `GuestInfoAdapter`, `FragmentSearchRides`, `ChangeStopFragment`, `DispatchLogFragment`, the hidden side menu and about 20 unused strings (for example `tap_here_to_mark_pickup`, `manually_mark_arrived_at_a_stop`, `switch_to_map_view`, `view_all_stops`, `contact_us`, `video_tutorial`, `under_development`).
+8. **Photo size check:** "File size should be less than 1 Mb" only triggers at 2 MB or more (integer division), though the compressor already shrinks the picture to 200x200.
+9. **Camera permission denied** on Edit Profile does nothing and shows no message.
 
 ## 7. Decisions needed before Phase T9
 
 1. May the tests **rename a staging shuttle and rename it back** (and select another shuttle and go back)? If not, SHUT-003 and SHUT-010 to SHUT-014 are reduced to opening the dialog and cancelling.
 2. Which shuttle may be used as the "other" shuttle? Suggestion: "Automated Shuttle-2" (Shuttle-2 has 10 seats and no ADA).
-3. Skip HELP-008 (video playback) and the walkthrough pictures if the network is the only thing under test? Suggestion: yes, assert only presence and controls.
+3. Skip HELP-008 (video playback) and the walkthrough pictures if the network is the only thing under test? Suggestion: yes, assert only presence and controls. *(answered: yes, skipped)*
+
+Decisions for T12 (open):
+4. **Delete Account (PROF-003):** may the test open the sheet and the "Delete Account?" alert and press **No**? It never presses Yes. Suggestion: yes.
+5. **Photo (PROF-001, 002, 004):** open the sheet and revoke/restore the camera permission only? Or also upload a picture through the gallery (fragile, slow)? Suggestion: first only; the upload later if wanted.
+6. **T12a** uses Driver 2 as operator again, which signs out its session on your other device for the run. Run it when Driver 2 is not in use?
 
 ## 8. Order and size
 
@@ -130,6 +192,6 @@ The first read did not cover these ASAP-mode areas. They get a second read befor
 | **T9 (done)** | Home header, Select Shuttle, Rename Shuttle | 7 tests (11 scenarios) | done |
 | **T10 (done)** | Help Center, Support, tours | 6 tests (7 scenarios) | done |
 | **T11 (done)** | Negative checks for Notifications and Dispatch Log | 2 tests | product answers pending |
-| **T12** | Second source read, then plan | to be sized | none |
+| **T12** | Dispatch sheets, Map tab, Change Drop-off errors, tracker combinations, photo and Delete Account | about 12 to 17 | decisions in section 7 |
 
 Total new: about 15 to 19 tests. After each phase the usual rules apply: an exploration run to record the screens, then assertions only on what was observed, cleanup that restores state, one report per phase, and nothing committed until asked.
