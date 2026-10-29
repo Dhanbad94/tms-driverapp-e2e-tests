@@ -1,6 +1,6 @@
 # Additional coverage plan: what the ASAP-mode source still offers (Phases T9 to T12)
 
-Status: **Phase T9 is done and passing (2026-10-28); T10 to T12 are planned only.** Decisions taken: renaming and restoring shuttles is allowed, Shuttle-2 is the "other" shuttle, and video playback is skipped.
+Status: **Phases T9 and T10 are done and passing (2026-10-28/29); T11 and T12 are planned only.** Decisions taken: renaming and restoring shuttles is allowed, Shuttle-2 is the "other" shuttle, and video playback is skipped.
 Source: a read of the on-demand (ASAP) code of the Driver app (`app/src/main/java/com/trackmyshuttle/driver` and `res`), 2026-10-28.
 The statements about the source below come from that read and from spot checks of the three biggest claims (Dispatch Log has no entry point, the Notifications tab is hidden, Help opens a Compose screen). Anything marked **CONFIRM** must be checked on the running app before an assertion is written.
 
@@ -69,6 +69,20 @@ Reached from the bottom bar "Help" (`cl_nav_help`). A Compose screen: located wi
 | HELP-007 | C | The Help content loads offline or fails cleanly | No crash; cards still shown or an error text (**CONFIRM**) | CODE | P3 |
 | HELP-008 | C | The video tour card plays or shows its poster and controls | Poster with play; playback not asserted (depends on the network and the file) | CODE | P3 |
 
+### T10 result (live, staging, emulator)
+6 tests, 7 of the 8 scenarios, all passed in two consecutive runs (`HelpTest`). HELP-008 (video playback) is skipped as decided.
+
+| Scenarios | Result |
+|---|---|
+| HELP-001 | Done. "Help Center", the Help tab selected, "Video Tour" with "Duration : 3 mins", and three cards with their explanations: Launch Quick Tour ("Take a guided tour of the app features"), Animation Tour ("Browse app screenshots and features"), Call Support ("Get immediate help from our support team"). |
+| HELP-002, 003 | Done. The Support screen reads "Need Help?", "Our support team is available 24/7 to assist you", "Support Phone Number", "(888) 574-8885", CALL NOW and the tip about the organisation name. CALL NOW opens the Google dialer with 8885748885 (nothing is dialled); coming back returns to the Support screen. |
+| HELP-004 | Done. Launch Quick Tour shows a full-screen picture; **7 taps** close it, back on the Help Center. |
+| HELP-005 | Done. Back during the quick tour closes it and the Help Center is shown. |
+| HELP-006 | Done. Animation Tour has **4 pages**: How to go On/Off Duty?, How to View Ride Requests?, How to Start Trip?, How to Reject/Manage Request?. NEXT is off on the last page; BACK goes to the previous page. |
+| HELP-007 | Done. With the network off, the Help Center cards and the Support screen still open. |
+
+The Help Center is a Compose screen: its texts are visible to the driver by text (no ids), the Support screen and the walkthrough have ids. The first-run tour (coachmark) stays unautomated: it is server state and shows once per app version.
+
 The first-run tour (coachmark) is **server-state**: it shows once per app version until the server stores it. It is a corner scenario and is **not automated**; Launch Quick Tour reaches the same overlay on demand.
 
 Estimated tests: 6 to 7.
@@ -106,7 +120,7 @@ The first read did not cover these ASAP-mode areas. They get a second read befor
 | Phase | Area | Tests (est.) | Needs |
 |---|---|---|---|
 | **T9 (done)** | Home header, Select Shuttle, Rename Shuttle | 7 tests (11 scenarios) | done |
-| **T10** | Help Center, Support, tours | 6 to 7 | none |
+| **T10 (done)** | Help Center, Support, tours | 6 tests (7 scenarios) | done |
 | **T11** | Negative checks for Notifications and Dispatch Log | 0 to 1 | product answers |
 | **T12** | Second source read, then plan | to be sized | none |
 

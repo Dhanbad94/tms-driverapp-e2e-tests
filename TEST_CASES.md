@@ -342,6 +342,20 @@ Each test assigns one ride (from "Terminal 5E" to "Door 3 - Bus/Shuttle Ctr") be
 
 **[SHUT-015] Renaming while offline does not rename: "Connectivity Issue. Please check your internet connection and try again later", the dialog stays open.**
 
+## Help Center (Phase T10)
+
+**[HELP-001] The Help tab opens "Help Center" with the video tour and three cards** — Launch Quick Tour, Animation Tour, Call Support, each with its explanation.
+
+**[HELP-002 / HELP-003] Call Support shows the support number, and CALL NOW opens the dialer with that number** — "(888) 574-8885"; nothing is dialled.
+
+**[HELP-004] Launch Quick Tour shows pictures that move on with each tap, and returns to the Help Center after the last one** — 7 taps.
+
+**[HELP-005] Pressing Back during the quick tour closes it.**
+
+**[HELP-006] Animation Tour steps through its four pages with NEXT and BACK, and NEXT is off on the last page.**
+
+**[HELP-007] Without a network the Help Center and the Support screen still open.**
+
 ## Not automated (decisions)
 
 - Driver-app-disabled dialog (AUTH-009): no disabled account will be provided.
