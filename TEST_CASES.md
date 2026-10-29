@@ -356,6 +356,12 @@ Each test assigns one ride (from "Terminal 5E" to "Door 3 - Bus/Shuttle Ctr") be
 
 **[HELP-007] Without a network the Help Center and the Support screen still open.**
 
+## What the driver cannot reach (Phase T11)
+
+**[NOTIF-001] The bottom bar offers exactly Home, Profile and Help; there is no Notifications tab anywhere.**
+
+**[NOTIF-002 / LOG-001] Nothing on Home, Ride Requests, Profile or Help leads to Notifications or a Dispatch Log** — the Requests toolbar icon goes back to Home.
+
 ## Not automated (decisions)
 
 - Driver-app-disabled dialog (AUTH-009): no disabled account will be provided.

@@ -1,6 +1,6 @@
 # Additional coverage plan: what the ASAP-mode source still offers (Phases T9 to T12)
 
-Status: **Phases T9 and T10 are done and passing (2026-10-28/29); T11 and T12 are planned only.** Decisions taken: renaming and restoring shuttles is allowed, Shuttle-2 is the "other" shuttle, and video playback is skipped.
+Status: **Phases T9, T10 and T11 are done and passing (2026-10-28/29); T12 is planned only.** Decisions taken: renaming and restoring shuttles is allowed, Shuttle-2 is the "other" shuttle, and video playback is skipped.
 Source: a read of the on-demand (ASAP) code of the Driver app (`app/src/main/java/com/trackmyshuttle/driver` and `res`), 2026-10-28.
 The statements about the source below come from that read and from spot checks of the three biggest claims (Dispatch Log has no entry point, the Notifications tab is hidden, Help opens a Compose screen). Anything marked **CONFIRM** must be checked on the running app before an assertion is written.
 
@@ -95,7 +95,15 @@ Estimated tests: 6 to 7.
 | NOTIF-002 | The Home ride-request icon opens Ride Requests, not Notifications | Requests screen | Already covered in T5/T6 |
 | LOG-001 | No control on Home, Profile or Help leads to a Dispatch Log | Not testable as a positive scenario | Waits for the product answer in section 6 |
 
-Estimated tests: 0 to 1. If the product owner confirms that the Dispatch Log or Notifications should be reachable, they become a new phase (the source describes their lists, search with at least 2 characters, the confirm bar, banners and empty texts: "No Dispatches Found within last 24 hours").
+### T11 result (live, staging, emulator)
+2 tests (`NavigationTest`), both passed.
+
+| Scenarios | Result |
+|---|---|
+| NOTIF-001 | Done. The bottom bar holds exactly **Home, Profile and Help** on Home, Profile and Help; the Notifications tab is not in the screen at all (no node, not even a hidden one). |
+| NOTIF-002, LOG-001 | Done. No text on Home, Ride Requests, Profile or Help mentions Notifications or a Dispatch Log. The Home Requests button opens "Ride Requests". The toolbar icon on Ride Requests (`iv_menu`) is a **way back to Home**, not a menu. Home has a closable "new ride requests" banner (`iv_close`) and nothing else that navigates. |
+
+These tests pass today because the screens are unreachable. If the product owner decides they should be reachable (question 1 and 2 in section 6), these are the tests that fail and become real scenarios (the source describes the Dispatch Log's list, its search from 2 characters, its confirm bar and its empty text "No Dispatches Found within last 24 hours").
 
 ## 5. Phase T12: items still to read in the source (not yet planned)
 
@@ -121,7 +129,7 @@ The first read did not cover these ASAP-mode areas. They get a second read befor
 |---|---|---|---|
 | **T9 (done)** | Home header, Select Shuttle, Rename Shuttle | 7 tests (11 scenarios) | done |
 | **T10 (done)** | Help Center, Support, tours | 6 tests (7 scenarios) | done |
-| **T11** | Negative checks for Notifications and Dispatch Log | 0 to 1 | product answers |
+| **T11 (done)** | Negative checks for Notifications and Dispatch Log | 2 tests | product answers pending |
 | **T12** | Second source read, then plan | to be sized | none |
 
 Total new: about 15 to 19 tests. After each phase the usual rules apply: an exploration run to record the screens, then assertions only on what was observed, cleanup that restores state, one report per phase, and nothing committed until asked.
