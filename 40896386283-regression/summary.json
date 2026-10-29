@@ -1,0 +1,27 @@
+{
+  "verdict": "PASSED",
+  "total": 115,
+  "passed": 30,
+  "failed": 0,
+  "skipped": 85,
+  "pass_rate": 100,
+  "retried": 0,
+  "passed_on_retry": 0,
+  "duration_seconds": 872.8,
+  "meta": {
+    "App": "com.trackmyshuttle.driver.staging v2.0.5 (126)",
+    "Environment": "staging",
+    "Commit": "7f57548b",
+    "Branch": "main",
+    "Trigger": "schedule",
+    "Run": "https://github.com/Dhanbad94/tms-driverapp-e2e-tests/actions/runs/40896386283",
+    "Suite": "regressionTest"
+  },
+  "suites": {
+    "regressionTest": {
+      "total": 115,
+      "failed": 0
+    }
+  },
+  "failures": []
+}
