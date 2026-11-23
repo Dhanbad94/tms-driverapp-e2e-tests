@@ -69,12 +69,12 @@ class MapAndDropoffTest {
         step("Given a trip has started")
         val (ride, trip) = startTrip(rides, 221)
 
-        step("When the driver opens MAP VIEW, then the card shows the stop, its address, an estimate in hours and I've Arrived, and the list cards are gone")
+        step("When the driver opens MAP VIEW, then the card shows the stop, its address, an estimate and I've Arrived, and the list cards are gone")
         trip.openMap()
         assertTrue(trip.isMapShown())
         assertEquals(pickup, trip.mapDestinationName())
         assertEquals(ride.request.pickup.address, trip.mapAddress())
-        assertTrue(Regex("\\d+ hr( \\d+ min)?").matches(trip.mapEstimatedTime()), "Estimate was '${trip.mapEstimatedTime()}'")
+        assertTrue(Regex("\\d+ hr( \\d+ min)?|\\d+ min").matches(trip.mapEstimatedTime()), "Estimate was '${trip.mapEstimatedTime()}'")
         assertEquals("I've Arrived", trip.arrivedButtonText())
         assertTrue(trip.stopNames().isEmpty(), "The list cards should not be shown on the map tab")
 

@@ -48,8 +48,11 @@ class LocationTest {
     private val pickup = "Terminal 5E"
     private val dropoff = "Door 3 - Bus/Shuttle Ctr"
 
-    /** Mountain View, the emulator's default: thousands of kilometres from the Chicago test stops. */
-    private val farAway = 37.4220 to -122.0841
+    /**
+     * Downtown Chicago: inside the organisation's region (staging refuses to assign rides to a driver outside it) and about 25 km from the
+     * O'Hare test stops, so the estimate is tens of minutes and the app does not arrive by itself.
+     */
+    private val farAway = 41.8781 to -87.6298
 
     @BeforeEach
     fun prepare() {
@@ -135,13 +138,16 @@ class LocationTest {
         step("Given a trip has started and the device is far from $pickup")
         val trip = startTrip(rides, 203)
 
-        step("When 45 seconds pass without moving, then the driver is still on the trip view and the estimate is still hours")
+        step("When 45 seconds pass without moving, then the driver is still on the trip view and the estimate is still many minutes")
         Thread.sleep(45_000)
         assertTrue(trip.isShown(Duration.ofSeconds(3)), "The trip view should still be shown")
         assertFalse(ArrivedScreen().isShown(Duration.ofSeconds(1)), "The arrived screen must not open")
         val etas = trip.estimatedTimes()
         observe("eta-far-away", etas.joinToString(" | "))
-        assertTrue(etas.first().contains("hr"), "The estimate should still be hours away: $etas")
+        val hours = Regex("(\\d+)\\s*hr").find(etas.first())?.groupValues?.get(1)?.toInt() ?: 0
+        val mins = Regex("(\\d+)\\s*min").find(etas.first())?.groupValues?.get(1)?.toInt() ?: 0
+        val minutes = hours * 60 + mins
+        assertTrue(!etas.first().equals("Arrived", ignoreCase = true) && minutes >= 5, "The estimate should still be well over a few minutes: $etas")
     }
 
     @Test

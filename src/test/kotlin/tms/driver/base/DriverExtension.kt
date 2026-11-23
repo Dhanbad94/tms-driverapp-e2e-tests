@@ -7,6 +7,7 @@ import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.slf4j.LoggerFactory
 import tms.driver.core.config.EnvConfig
+import tms.driver.core.device.Adb
 import tms.driver.core.driver.DriverSession
 import tms.driver.core.report.Artifacts
 
@@ -18,8 +19,22 @@ import tms.driver.core.report.Artifacts
 class DriverExtension : BeforeEachCallback, AfterTestExecutionCallback, AfterEachCallback {
     private val log = LoggerFactory.getLogger(DriverExtension::class.java)
 
+    /**
+     * Staging refuses to assign a ride (answers 500 "Something went wrong") to a driver whose position is outside the organisation's region,
+     * which is Chicago. The emulator starts in Mountain View, so every test puts it in downtown Chicago first: inside the region and about
+     * 25 km from the O'Hare stops, so no ride arrives by itself. Override with TMS_DEVICE_LATITUDE / TMS_DEVICE_LONGITUDE. Real devices
+     * have no emulator console, so the call just fails there and is ignored.
+     */
+    private fun putEmulatorInRegion(config: EnvConfig) {
+        if (config.udid != null && !config.udid.startsWith("emulator")) return
+        val lat = System.getenv("TMS_DEVICE_LATITUDE")?.toDoubleOrNull() ?: 41.8781
+        val lon = System.getenv("TMS_DEVICE_LONGITUDE")?.toDoubleOrNull() ?: -87.6298
+        runCatching { Adb(config.udid).setEmulatorLocation(lat, lon) }.onFailure { log.debug("Could not set the emulator location: {}", it.message) }
+    }
+
     override fun beforeEach(context: ExtensionContext) {
         val config = EnvConfig.load()
+        putEmulatorInRegion(config)
         Allure.parameter("flavor", config.flavor)
         Allure.parameter("appPackage", config.appPackage)
         DriverSession.start(config)
