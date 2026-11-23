@@ -61,6 +61,7 @@ class TwoRidesTest {
         return trip.waitUntilShown().also { it.waitForEstimatedTimes() }
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[HOME-004] A second ride can be added once the trip has started; Home then counts the stops of both rides")
     fun secondRideJoinsRunningTrip(rides: RideFixture) {
@@ -87,6 +88,7 @@ class TwoRidesTest {
         assertTrue(trip.stopNames().containsAll(listOf("Mannheim Rd", "Terminal 3 10000", "Door 3 - Bus/Shuttle Ctr")), "Stops: ${trip.stopNames()}")
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[TRIPV-010] With two rides, 'Go here instead' on a later stop asks for confirmation; CANCEL changes nothing and CONFIRM makes it the next stop")
     fun goHereInstead(rides: RideFixture) {

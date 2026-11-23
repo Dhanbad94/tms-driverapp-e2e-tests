@@ -85,6 +85,7 @@ class ReachDestinationTest {
         assertEquals("REVIEW", sheet.reviewText())
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[ARR-001 / 002 / 003 / 004 / 005 / 006 / 008 / 009 / 017] A driver picks the rider up, moves to the drop-off and completes the trip")
     fun pickUpAndCompleteTheTrip(rides: RideFixture) {
@@ -188,6 +189,7 @@ class ReachDestinationTest {
         assertTrue(home.waitForEmptyState(Duration.ofSeconds(40)), "Home should show the empty state after the trip")
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[ARR-007 / ARR-019] Marking the only rider a no-show completes the trip, and REVIEW opens the Ride Requests screen")
     fun noShowCompletesTheTrip(rides: RideFixture) {
@@ -254,6 +256,7 @@ class ReachDestinationTest {
         assertEquals(dropoff, TripViewScreen().waitUntilShown().currentStopName())
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[ARR-013] At the last stop the trip finishes by itself after about 10 seconds if the driver does nothing")
     fun lastStopFinishesByItself(rides: RideFixture) {
@@ -279,6 +282,7 @@ class ReachDestinationTest {
         assertTrue(OdHomeScreen().waitForEmptyState(Duration.ofSeconds(40)))
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[ARR-018] After a completed trip a new ride starts fresh, with no seats left over from the last one")
     fun secondTripStartsFresh(rides: RideFixture) {

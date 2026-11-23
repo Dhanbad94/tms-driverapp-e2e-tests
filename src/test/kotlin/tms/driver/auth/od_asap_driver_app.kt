@@ -58,6 +58,7 @@ class OdAsapDriverApp {
 
     // ================================================================ Login screen
 
+    @Tag("smoke")
     @Test
     @DisplayName("[AUTH-003] Tapping the phone number area opens the login form")
     fun `AUTH-003 tapping the number area expands the form`() {
@@ -75,6 +76,7 @@ class OdAsapDriverApp {
         assertFalse(login.isSubmitEnabled(), "Submit should be disabled while the phone number is empty")
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[AUTH-004] Submit is enabled only when a full phone number has been typed")
     fun `AUTH-004 submit enablement follows the phone number length`() {
@@ -97,6 +99,7 @@ class OdAsapDriverApp {
         assertFalse(login.isSubmitEnabled(), "Submit should be disabled again once the number is cleared")
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[AUTH-005] The phone number field stops accepting digits after 15")
     fun `AUTH-005 phone field accepts at most 15 characters`() {
@@ -138,6 +141,7 @@ class OdAsapDriverApp {
         assertFalse(login.isErrorShown(), "The error message should disappear when the number is edited")
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[AUTH-010] Choosing a country in the country picker updates the dial code")
     fun `AUTH-010 country picker selection is applied`() {
@@ -206,6 +210,7 @@ class OdAsapDriverApp {
         assertTrue(passcode.isShown(), "The driver should remain on the passcode screen")
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[PASS-003] Submit is available only once exactly four passcode digits are entered")
     fun `PASS-003 submit is enabled only at exactly four digits`() {
@@ -231,6 +236,7 @@ class OdAsapDriverApp {
         assertEquals(true, passcode.isSubmitEnabled(), "A fifth digit should not change the Submit state")
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[PASS-006] The passcode is hidden while it is being typed")
     fun `PASS-006 passcode is masked in the field`() {
@@ -364,6 +370,7 @@ class OdAsapDriverApp {
 
     // ================================================================ Home screen
 
+    @Tag("smoke")
     @Test
     @DisplayName("[SH-001 / SH-002] The home screen greets the driver and the bottom tabs open their screens")
     fun `SH-001 and SH-002 home shell shows the driver and the tabs switch screens`() {
@@ -427,6 +434,7 @@ class OdAsapDriverApp {
 
     // ================================================================ Profile and passcode change
 
+    @Tag("smoke")
     @Test
     @DisplayName("[PR-001 / PR-002] Profile shows the driver's details and Edit Profile rejects missing or invalid fields")
     fun `PR-001 and PR-002 profile shows details and edit-profile validates required fields`() {
@@ -464,6 +472,7 @@ class OdAsapDriverApp {
         edit.leave()
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[CP-001 / CP-002] Change Passcode rejects a wrong current passcode and a new passcode that does not match")
     fun `CP-001 and CP-002 change passcode rejects a wrong current passcode and a mismatched confirmation`() {

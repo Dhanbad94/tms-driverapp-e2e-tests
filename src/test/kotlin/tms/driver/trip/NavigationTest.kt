@@ -51,6 +51,7 @@ class NavigationTest {
         assertFalse(texts.any { it.contains("dispatch", ignoreCase = true) && it.contains("log", ignoreCase = true) }, "$screen shows a Dispatch Log text: $texts")
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[NOTIF-001] The bottom bar offers exactly Home, Profile and Help; there is no Notifications tab anywhere")
     fun bottomBar() {
@@ -69,6 +70,7 @@ class NavigationTest {
         shell.open(Tab.HELP); assertEquals(listOf(Tab.HOME, Tab.PROFILE, Tab.HELP), shell.presentTabs())
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[NOTIF-002 / LOG-001] Nothing on Home, Ride Requests, Profile or Help leads to Notifications or a Dispatch Log")
     fun noWayToNotificationsOrDispatchLog() {

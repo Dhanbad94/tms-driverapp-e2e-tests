@@ -62,6 +62,7 @@ class StartTripTest {
         return OdHomeScreen().also { assertTrue(it.waitForTrip(Duration.ofSeconds(60)), "A trip should be shown after logging in") }
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[START-001 / 002 / 011 / 012 / 015] START TRIP asks to confirm the shuttle once, opens one trip view, and CONTINUE TRIP returns to it without asking again")
     fun confirmShuttleAndOpenTrip(rides: RideFixture) {
@@ -103,6 +104,7 @@ class StartTripTest {
         assertFalse(ConfirmShuttleDialog().isShown(Duration.ofSeconds(1)), "The shuttle should not be asked about a second time")
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[START-004 / 005 / 006 / 007] Choosing a different shuttle lists the ride's needs and warns about an unsuitable shuttle")
     fun differentShuttleWarnings(rides: RideFixture) {

@@ -71,6 +71,7 @@ class RequestsIntakeTest {
     private fun queueCard(screen: RideRequestsScreen, ride: TestRide): RequestCard =
         screen.card(ride.riderName, Duration.ofSeconds(30)) ?: throw AssertionError("The ride of ${ride.riderName} should be listed in the Requests tab")
 
+    @Tag("smoke")
     @Test
     @DisplayName("[INT-001 / 002 / 003 / 004] A waiting ride is listed with its details and the two assign buttons")
     fun waitingRideCard(rides: RideFixture) {
@@ -99,6 +100,7 @@ class RequestsIntakeTest {
         assertTrue(requests.tabCount(RequestsTab.REQUESTS) >= 1, "The Requests badge should count the waiting rides")
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[INT-018] The sort sheet offers Oldest First, Newest First and Rider Name, and reorders the list")
     fun sorting(rides: RideFixture) {
@@ -126,6 +128,7 @@ class RequestsIntakeTest {
         assertEquals(names.sortedBy { it.lowercase() }, names, "Riders should be A to Z")
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[INT-019] Search needs two characters, finds the ride by its name and says 'No Results Found' otherwise")
     fun searching(rides: RideFixture) {
@@ -155,6 +158,7 @@ class RequestsIntakeTest {
         assertTrue(requests.waitUntilShown().isShown(Duration.ofSeconds(10)))
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[INT-012 / INT-006] ASSIGN TO SELF stages the ride with a CONFIRM & START TRIP bar, and CANCEL assigns nothing")
     fun stageAndCancel(rides: RideFixture) {
@@ -180,6 +184,7 @@ class RequestsIntakeTest {
         assertTrue(home.waitForEmptyState(Duration.ofSeconds(30)))
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[INT-005 / INT-006] Confirming ASSIGN TO SELF assigns the ride, starts the trip and opens the trip view")
     fun stageAndConfirm(rides: RideFixture) {
@@ -237,6 +242,7 @@ class RequestsIntakeTest {
         assertFalse(TripViewScreen().isShown(Duration.ofSeconds(3)), "The trip view must not open without GPS")
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[INT-014] A party larger than the shuttle's 15 seats cannot be assigned")
     fun partyLargerThanSeats(rides: RideFixture) {
@@ -260,6 +266,7 @@ class RequestsIntakeTest {
         assertTrue(home.waitForEmptyState(Duration.ofSeconds(30)))
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[INT-021] A long rider name with accents and punctuation is shown without hiding the assign buttons")
     fun longSpecialName(rides: RideFixture) {
@@ -307,6 +314,7 @@ class RequestsIntakeTest {
         }
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[INT-022] The largest party the rider app allows (75) is shown correctly, and one more (76) is refused by the Rider API")
     fun largestParty(rides: RideFixture) {

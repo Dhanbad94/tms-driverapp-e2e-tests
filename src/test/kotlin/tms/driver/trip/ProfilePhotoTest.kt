@@ -49,6 +49,7 @@ class ProfilePhotoTest {
         return HomeShell().openProfile().openEdit()
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[PROF-001] The camera icon on Edit Profile opens a sheet with Camera and Gallery only, and Back closes it")
     fun photoSheet() {
@@ -65,6 +66,7 @@ class ProfilePhotoTest {
         assertEquals("Automation", edit.firstNameText())
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[PROF-002] Refusing the camera permission does nothing and says nothing")
     fun cameraPermissionRefused() {
@@ -99,6 +101,7 @@ class ProfilePhotoTest {
         }
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[PROF-003] Delete Account asks twice; answering NO keeps the account and the driver signed in")
     fun deleteAccountAskedTwiceAnswerNo() {

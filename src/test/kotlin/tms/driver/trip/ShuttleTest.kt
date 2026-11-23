@@ -60,6 +60,7 @@ class ShuttleTest {
 
     private fun openList(home: OdHomeScreen): SelectShuttleScreen { home.tapShuttle(); return SelectShuttleScreen().waitUntilShown() }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[SHUT-001 / SHUT-002 / SHUT-004 / SHUT-009] Home shows the organisation and shuttle; tapping the shuttle lists both shuttles with seats and driver, and CONFIRM is already on")
     fun headerAndList(rides: RideFixture) {
@@ -92,6 +93,7 @@ class ShuttleTest {
         assertTrue(list.isConfirmEnabled())
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[SHUT-003] Confirming the current shuttle returns Home with the same shuttle")
     fun confirmCurrentShuttle(rides: RideFixture) {
@@ -105,6 +107,7 @@ class ShuttleTest {
         assertEquals(own, home.shuttleText())
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[SHUT-005 / SHUT-006] Search narrows the shuttles by part of the name in any case, and says 'No match found' otherwise")
     fun searching(rides: RideFixture) {
@@ -129,6 +132,7 @@ class ShuttleTest {
         assertEquals(setOf(own, other), list.rowNames().toSet())
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[SHUT-007] A shuttle held by another driver asks 'Belongs to another driver'; PICK ANOTHER keeps the current shuttle")
     fun shuttleOfAnotherDriver(rides: RideFixture) {

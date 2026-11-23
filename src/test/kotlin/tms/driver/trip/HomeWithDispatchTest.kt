@@ -64,6 +64,7 @@ class HomeWithDispatchTest {
         )
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[HOME-005] With no ride assigned the Home screen says there are no trips")
     fun emptyStateWithNoRide(rides: RideFixture) {
@@ -104,6 +105,7 @@ class HomeWithDispatchTest {
         assertEquals(variant.adaShown, home.isAdaShown(), "ADA row for ride '${ride.riderName}'")
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[HOME-001 / HOME-006 / HOME-007 / HOME-008 / HOME-010 / HOME-012] A driver with one ride sees it, can refresh and restart, cannot go off duty, and sees it vanish when cancelled")
     fun oneRideJourney(rides: RideFixture) {

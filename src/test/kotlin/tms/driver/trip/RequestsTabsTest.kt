@@ -66,6 +66,7 @@ class RequestsTabsTest {
         return screen.card(ride.riderName) ?: throw AssertionError("The ride of ${ride.riderName} should be listed on the ${tab.title} tab")
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[REQ-005] The Assigned and In-progress tabs say so when nothing is assigned")
     fun emptyTabs(rides: RideFixture) {
@@ -86,6 +87,7 @@ class RequestsTabsTest {
         assertEquals(listOf("Requests", "Assigned", "In-progress", "Completed"), requests.tabTitles())
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[REQ-001 / REQ-007 / PAX-002] The Assigned tab shows the ride with its details and a menu that opens the dialer")
     fun assignedTab(rides: RideFixture) {
@@ -129,6 +131,7 @@ class RequestsTabsTest {
         assertTrue(requests.isShown(Duration.ofSeconds(10)), "The Requests screen should be there once the menu is closed")
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[REQ-002] The In-progress tab shows a ride once the trip has started")
     fun inProgressTab(rides: RideFixture) {
@@ -154,6 +157,7 @@ class RequestsTabsTest {
         assertFalse(screen.hasCard(ride.riderName), "The started ride should have left the Assigned tab")
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[PAX-005 / REQ-003 / REQ-007] Mark as Completed finishes the ride at once and lists it under Completed")
     fun markAsCompleted(rides: RideFixture) {
@@ -177,6 +181,7 @@ class RequestsTabsTest {
         assertTrue(home.waitForEmptyState(Duration.ofSeconds(30)), "Home should show the empty state")
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[PAX-006 / REQ-003] Cancel Dispatch asks for a reason and then shows the ride as cancelled by the driver")
     fun cancelDispatch(rides: RideFixture) {
@@ -210,6 +215,7 @@ class RequestsTabsTest {
         assertTrue(home.waitForEmptyState(Duration.ofSeconds(30)))
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[PAX-004 / REQ-007] Move to Request Queue puts the ride back among the unassigned requests")
     fun moveToQueue(rides: RideFixture) {
@@ -230,6 +236,7 @@ class RequestsTabsTest {
         assertTrue(home.waitForEmptyState(Duration.ofSeconds(30)))
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[PAX-001] The Assigned card shows the room number, the flight number and the note")
     fun cardShowsRoomAndFlight(rides: RideFixture) {
@@ -261,6 +268,7 @@ class RequestsTabsTest {
         assertEquals("UA1234", sheet.flightText())
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[PAX-007] Cancelling with the reason 'Other' asks for text, and DONE stays off until some is typed")
     fun cancelWithOtherReason(rides: RideFixture) {
@@ -285,6 +293,7 @@ class RequestsTabsTest {
         assertTrue(Regex("Canceled By Driver \\(at \\d{2}:\\d{2} [AP]M\\)").matches(card.statusText().orEmpty()), "Status was '${card.statusText()}'")
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[REQ-006] A finished ride on the Completed tab offers only the rider's number in its menu")
     fun completedCardMenu(rides: RideFixture) {
@@ -301,6 +310,7 @@ class RequestsTabsTest {
         assertTrue(entries[0].startsWith("+91-"), "The only entry should be the rider's number: ${entries[0]}")
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[PAX-005 extra] Once the trip has started, the card menu no longer offers Move to Request Queue")
     fun startedRideMenuHasNoQueueEntry(rides: RideFixture) {

@@ -62,6 +62,7 @@ class MapAndDropoffTest {
         return ride to TripViewScreen().waitUntilShown().also { it.waitForEstimatedTimes() }
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[MAP-001 / MAP-004] The Map tab shows the destination card, and I've Arrived on it opens the Arrived screen at once")
     fun mapCard(rides: RideFixture) {
@@ -86,6 +87,7 @@ class MapAndDropoffTest {
         assertEquals("Arrived At", arrived.subtitleText())
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[MAP-003] Tapping the rider on the Map tab opens the rider sheet")
     fun mapRiderChip(rides: RideFixture) {
@@ -105,6 +107,7 @@ class MapAndDropoffTest {
         assertTrue(trip.isMapShown(), "Closing the sheet leaves the Map tab as it was")
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[MAP-005] Dragging the map shows RE-CENTER, and tapping it hides the button again")
     fun recenter(rides: RideFixture) {
@@ -123,6 +126,7 @@ class MapAndDropoffTest {
         assertTrue(trip.waitUntilRecenterGone(), "RE-CENTER should go once the map is centred again")
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[DROP-001 / DROP-002] Change Drop-off opens with UPDATE off, says 'No match found' for a bad search, and turns UPDATE on once a stop is chosen")
     fun updateRules(rides: RideFixture) {

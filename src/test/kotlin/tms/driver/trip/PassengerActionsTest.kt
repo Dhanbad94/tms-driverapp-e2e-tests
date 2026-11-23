@@ -65,6 +65,7 @@ class PassengerActionsTest {
         return TripViewScreen().waitUntilShown().also { it.waitForEstimatedTimes() }
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[PAX-010] The rider menu offers Move to Request Queue, Change Drop-off, Assign to another Driver and the number, and nothing else")
     fun riderMenuEntries(rides: RideFixture) {
@@ -80,6 +81,7 @@ class PassengerActionsTest {
         assertTrue(entries[3].startsWith("+91-"), "The last entry should be the rider's number: ${entries[3]}")
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[PAX-008] Change Drop-off lists the current stops, can be cancelled, and moves the drop-off to the stop the driver picks")
     fun changeDropoff(rides: RideFixture) {
@@ -116,6 +118,7 @@ class PassengerActionsTest {
         assertEquals(listOf(pickup, newStop), trip.stopNames())
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[PAX-003] PICK UP from the rider sheet needs a second tap to confirm")
     fun pickUpFromTripView(rides: RideFixture) {
@@ -137,6 +140,7 @@ class PassengerActionsTest {
         assertEquals("Driving to", trip.titleText())
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[PAX-009] ASSIGN TO DRIVER opens the Assign Driver screen with the available drivers, and leaving it keeps the ride with this driver")
     fun assignDriverScreen(rides: RideFixture) {

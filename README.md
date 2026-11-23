@@ -64,7 +64,9 @@ The `production` flavor is refused by `EnvConfig`.
 # 2) Start Appium in another terminal
 appium
 
-# 3) Launch smoke test (device + Appium + APK required)
+# 3) Smoke suite: 74 tests (launch, login/session, and the stable trip tests; no SMS, no second driver, nothing that
+#    switches the network, GPS or duty off, nothing that renames a shuttle). About 1.5 to 2 hours and about 50 test rides
+#    (SMS to the rider phone) on the emulator. Device + Appium + APK required.
 #    Auth slice: ./gradlew authTest -Penv=staging   (needs TMS_DRIVER_PHONE / TMS_DRIVER_PASSCODE)
 #    Resend OTP (sends real SMS): ./gradlew smsTest -Penv=staging
 export TMS_APK_PATH=/path/to/driver-staging.apk
@@ -144,7 +146,7 @@ To run on a physical device with a release-style build:
 | Workflow | When | What |
 |---|---|---|
 | `.github/workflows/ci.yml` | pull request / push to `main` | `./gradlew test` (no device), then `smokeTest` on an emulator |
-| `.github/workflows/driver-staging.yml` | Mon-Fri 06:00 UTC smoke; Tue/Thu 08:00 UTC regression; manual | `smoke`, `auth`, `trip`, `regression` (= smoke + auth + trip, no SMS) or `sms` (needs `confirm_sms`) |
+| `.github/workflows/driver-staging.yml` | Tue/Thu 08:00 UTC regression; manual | `smoke`, `auth`, `trip`, `regression` (= smoke + auth + trip, no SMS) or `sms` (needs `confirm_sms`) |
 | `.github/workflows/_e2e.yml` | called by the two above | emulator + Appium + Gradle + dashboard + optional Pages and Slack |
 
 Runs share one staging backend and one QA driver account, so they are serialized (`concurrency: driver-e2e-staging`).

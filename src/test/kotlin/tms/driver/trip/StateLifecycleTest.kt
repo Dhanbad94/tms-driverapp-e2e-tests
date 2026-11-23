@@ -64,6 +64,7 @@ class StateLifecycleTest {
         return TripViewScreen().waitUntilShown().also { it.waitForEstimatedTimes() }
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[STATE-001] Closing the app during a trip and opening it again resumes the trip")
     fun restartResumesTrip(rides: RideFixture) {
@@ -96,6 +97,7 @@ class StateLifecycleTest {
         assertEquals(listOf(pickup, dropoff), trip.stopNames())
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[STATE-002] Sending the app to the background and back keeps the trip view as it was")
     fun backgroundKeepsScreen(rides: RideFixture) {
@@ -131,6 +133,7 @@ class StateLifecycleTest {
         assertEquals(listOf(pickup, dropoff), trip.stopNames())
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[STATE-006] Turning the device sideways does not turn the app: it stays in portrait")
     fun staysPortrait(rides: RideFixture) {
@@ -151,6 +154,7 @@ class StateLifecycleTest {
         }
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[STATE-003] Signing out while a ride is assigned: the ride stays assigned and is back on Home after signing in again")
     fun signOutWithRide(rides: RideFixture) {

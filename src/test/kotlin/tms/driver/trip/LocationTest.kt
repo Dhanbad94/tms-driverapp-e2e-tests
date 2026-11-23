@@ -76,6 +76,7 @@ class LocationTest {
         return TripViewScreen().waitUntilShown().also { it.waitForEstimatedTimes() }
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[GPS-001] While a trip runs, the app keeps a foreground location service with its notification")
     fun locationServiceRuns(rides: RideFixture) {
@@ -127,6 +128,7 @@ class LocationTest {
         assertTrue(again, "Inside the geofence the app should navigate to the Arrived screen again (confirmed as intended)")
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[TRIPV-009] While the device stays far from the pickup, the app does not arrive by itself")
     fun doesNotArriveFarAway(rides: RideFixture) {

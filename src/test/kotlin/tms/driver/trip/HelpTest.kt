@@ -50,6 +50,7 @@ class HelpTest {
         return HelpCenterScreen().waitUntilShown()
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[HELP-001] The Help tab opens 'Help Center' with the video tour and three cards")
     fun helpCenterContent() {
@@ -73,6 +74,7 @@ class HelpTest {
         assertTrue(help.hasText("Get immediate help from our support team"))
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[HELP-002 / HELP-003] Call Support shows the support number, and CALL NOW opens the dialer with that number")
     fun callSupport() {
@@ -97,6 +99,7 @@ class HelpTest {
         assertTrue(SupportScreen().isShown(Duration.ofSeconds(15)), "The support screen should still be there after returning")
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[HELP-004] Launch Quick Tour shows pictures that move on with each tap, and returns to the Help Center after the last one")
     fun quickTour() {
@@ -115,6 +118,7 @@ class HelpTest {
         assertTrue(help.isShown(Duration.ofSeconds(10)), "The Help Center should be shown again")
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[HELP-005] Pressing Back during the quick tour closes it")
     fun quickTourBack() {
@@ -129,6 +133,7 @@ class HelpTest {
         assertTrue(help.isShown(Duration.ofSeconds(10)), "The Help Center should be shown again")
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[HELP-006] Animation Tour steps through its pages with NEXT and BACK, and NEXT is off on the last page")
     fun walkthrough() {

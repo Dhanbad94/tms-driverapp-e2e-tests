@@ -61,6 +61,7 @@ class TripLifecycleTest {
         riderConfig = r!!
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[TRIP-001] A ride created through the Rider API and assigned through the Driver API appears on the driver's home screen")
     fun createdAndAssignedRideAppearsOnHome() {

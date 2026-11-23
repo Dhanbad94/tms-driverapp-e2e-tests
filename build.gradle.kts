@@ -55,7 +55,7 @@ tasks.test {
 // Device-backed launch smoke test (needs Appium server + device/emulator + APK installed or TMS_APK_PATH).
 tasks.register<Test>("smokeTest") {
     group = "verification"
-    description = "Runs @smoke tests against a live Appium session."
+    description = "Runs the 74 @smoke tests (launch, login/session and the stable trip tests) against a live Appium session."
     testClassesDirs = sourceSets["test"].output.classesDirs
     classpath = sourceSets["test"].runtimeClasspath
     configureCommon()

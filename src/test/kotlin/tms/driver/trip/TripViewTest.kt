@@ -67,6 +67,7 @@ class TripViewTest {
         return hours * 60 + mins
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[TRIPV-001 / 002 / 003 / 004 / 005 / 011] The trip view lists the pickup and drop-off with their riders, switches between list and map, refreshes and shows rider details")
     fun tripViewContent(rides: RideFixture) {
@@ -132,6 +133,7 @@ class TripViewTest {
         assertEquals(listOf(pickup, dropoff), trip.stopNames())
     }
 
+    @Tag("smoke")
     @Test
     @DisplayName("[TRIPV-006 / 007] I've Arrived opens one 'Arrived At' screen for the pickup, and Back returns to the trip view and then Home")
     fun arriveAtThePickup(rides: RideFixture) {
