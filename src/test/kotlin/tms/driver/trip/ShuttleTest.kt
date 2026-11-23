@@ -86,7 +86,8 @@ class ShuttleTest {
         assertEquals("Automation Driver", rows.getValue(own).driver)
         assertEquals("10", rows.getValue(other).seats)
         assertFalse(rows.getValue(other).selected, "The other shuttle must not be selected")
-        assertEquals("Automation Driver 2", rows.getValue(other).driver)
+        // Automation Driver 2 holds Shuttle-2 only while it is signed in on a shuttle; a released shuttle shows no driver.
+        assertTrue(rows.getValue(other).driver in listOf(null, "Automation Driver 2"), "Shuttle-2 driver was '${rows.getValue(other).driver}'")
 
         step("And CONFIRM is on at once because the current shuttle is already selected")
         assertEquals("CONFIRM", list.confirmText())

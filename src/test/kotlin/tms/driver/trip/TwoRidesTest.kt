@@ -90,7 +90,7 @@ class TwoRidesTest {
 
     @Tag("smoke")
     @Test
-    @DisplayName("[TRIPV-010] With two rides, 'Go here instead' on a later stop asks for confirmation; CANCEL changes nothing and CONFIRM makes it the next stop")
+    @DisplayName("[TRIPV-010] With two rides, 'Go here instead' on a later stop asks for confirmation; CANCEL changes nothing and CONFIRM moves it earlier in the route")
     fun goHereInstead(rides: RideFixture) {
         step("Given two rides are on the running trip and the driver is looking at the trip view")
         rides.assignedRide(rideA(153))
@@ -108,12 +108,15 @@ class TwoRidesTest {
         dialog.cancel()
         assertEquals(before, stopsWhenLoaded(trip))
 
-        step("When the driver taps it again and confirms, then the chosen stop moves to the top of the route")
+        step("When the driver taps it again and confirms, then the chosen stop moves earlier in the route")
+        // The server re-orders the route (a pick-up always stays before its own drop-off), so the chosen stop is next only when it can be;
+        // what must hold is that it is visited earlier than before and that the route changed.
         val chosen = before.last()
         trip.tapGoHereInstead(0).confirm()
         val after = stopsWhenLoaded(trip)
         observe("stops-after", after.joinToString(" > "))
-        assertEquals(chosen, after.first(), "The chosen stop should be next, but the route is $after")
+        assertTrue(after.indexOf(chosen) < before.indexOf(chosen), "The chosen stop should come earlier: before $before, after $after")
+        assertTrue(after != before, "The route should have changed: $after")
     }
 
     @Test
