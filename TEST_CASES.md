@@ -384,6 +384,14 @@ Each test assigns one ride (from "Terminal 5E" to "Door 3 - Bus/Shuttle Ctr") be
 
 **[PROF-003] Delete Account asks twice; answering NO keeps the account and the driver signed in.**
 
+## Search on the Requests screen (Phase T14)
+
+**[SRCH-001] Search lists a waiting ride under "Request Queue" with the assign buttons, and a ride the rider cancelled under "Completed" without them** — "Canceled By Guest (at hh:mm)".
+
+**[SRCH-004] The menu on a waiting ride's search result is the same as on its Requests card** — Reject Request, Change Pick-up, Change Drop-off, Mark as Completed and the rider's number.
+
+**[INT-020] A ride that arrived while the app had no network is on the Requests tab after pulling to refresh** — the app already lists it once the network is back.
+
 ## Not automated (decisions)
 
 - Driver-app-disabled dialog (AUTH-009): no disabled account will be provided.

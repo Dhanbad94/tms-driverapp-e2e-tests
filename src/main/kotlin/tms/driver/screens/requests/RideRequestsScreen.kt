@@ -118,14 +118,23 @@ class RideRequestsScreen : BaseScreen() {
     /** True when a piece of text (for example the "Last 24 Hours" header of the Completed tab) is on screen. */
     fun isTextShown(text: String): Boolean = waits.isVisibleNow(By.xpath("//*[@text='$text']"))
 
-    private fun cardLocator(riderName: String): By {
-        val unique = riderName.takeLast(13)
-        // The card is the closest ancestor of the passenger name that also holds the status line (time_ago).
-        return By.xpath(
-            "//*[@resource-id='${Ids.of("passenger_name")}' and contains(@text,'$unique')]" +
-                "/ancestor::*[.//*[@resource-id='${Ids.of("time_ago")}']][1]"
-        )
+    private fun cardLocator(riderName: String): By = requestCardLocator(riderName)
+
+    /** Pulls the list down, which reloads it. */
+    fun pullToRefresh() {
+        val rect = driver.findElement(Ids.by("rv_ride_requests")).rect
+        driver.executeScript("mobile: swipeGesture", mapOf("left" to rect.x + 40, "top" to rect.y + 10, "width" to rect.width - 80, "height" to rect.height / 2, "direction" to "down", "percent" to 0.9))
+        Thread.sleep(2_000)
     }
+}
+
+/** The card of a rider on any Requests list or on the search results: the closest ancestor of the name that also holds the status line. */
+fun requestCardLocator(riderName: String): By {
+    val unique = riderName.takeLast(13)
+    return By.xpath(
+        "//*[@resource-id='${Ids.of("passenger_name")}' and contains(@text,'$unique')]" +
+            "/ancestor::*[.//*[@resource-id='${Ids.of("time_ago")}']][1]"
+    )
 }
 
 /** One card of the Assigned / In-progress / Completed lists. */
@@ -202,11 +211,43 @@ class SearchScreen : BaseScreen() {
     fun hintText(): String = textOf(message)           // "Search Driver or Rider", later "No Results Found"
     fun messageOrNull(): String? = driver.findElements(message).firstOrNull()?.takeIf { it.isDisplayed }?.text
     fun type(text: String): SearchScreen {
-        waits.visible(field).also { it.clear(); it.sendKeys(text) }
-        Thread.sleep(2_000)
+        // Typing goes through the keyboard, whose suggestions sometimes append text (seen as " ft"). The text is therefore pasted from the
+        // clipboard, which the keyboard does not touch, and the box is checked; a normal typing attempt is the fallback.
+        repeat(3) { attempt ->
+            val box = waits.visible(field)
+            runCatching { box.clear() }
+            if (text.isNotEmpty()) {
+                if (attempt < 2) {
+                    val android = driver as io.appium.java_client.android.AndroidDriver
+                    android.setClipboardText(text)
+                    box.click()
+                    android.pressKey(io.appium.java_client.android.nativekey.KeyEvent(io.appium.java_client.android.nativekey.AndroidKey.PASTE))
+                } else box.sendKeys(text)
+            }
+            Thread.sleep(700)
+            if (driver.findElement(field).text == text) { Thread.sleep(1_400); return this }
+            runCatching { driver.findElement(Ids.by("iv_clear_search_text")).click(); Thread.sleep(400) }
+        }
+        Thread.sleep(1_400)
         return this
     }
     fun resultNames(): List<String> = driver.findElements(Ids.by("passenger_name")).map { it.text }
+    /** The section headers of the results, top to bottom ("Request Queue", "Assigned", "Completed"). */
+    fun sectionTitles(): List<String> = driver.findElements(Ids.by("tv_title")).map { it.text }
+    /** The result card of a rider, or null when it is not listed. The results are scrolled when the card is below the fold. */
+    fun card(riderName: String, timeout: Duration = Duration.ofSeconds(15)): RequestCard? {
+        val locator = requestCardLocator(riderName)
+        if (waits.appears(locator, minOf(timeout, Duration.ofSeconds(5)))) return RequestCard { driver.findElement(locator) }
+        // The results list reaches under the on-screen keyboard, and a swipe there is read as swipe typing, so the keyboard goes first.
+        runCatching { driver.hideKeyboard() }
+        repeat(4) {
+            val rect = driver.findElements(Ids.by("rv_ride_requests")).firstOrNull()?.rect ?: return null
+            runCatching { driver.executeScript("mobile: swipeGesture", mapOf("left" to rect.x + 40, "top" to rect.y + rect.height / 4, "width" to rect.width - 80, "height" to rect.height / 2, "direction" to "up", "percent" to 0.7)) }
+            Thread.sleep(800)
+            if (waits.appears(locator, Duration.ofSeconds(2))) return RequestCard { driver.findElement(locator) }
+        }
+        return null
+    }
     fun hasSectionTitle(title: String): Boolean = waits.isVisibleNow(By.xpath("//*[@resource-id='${Ids.of("tv_title")}' and @text='$title']"))
     fun close() = tap(close)
 }

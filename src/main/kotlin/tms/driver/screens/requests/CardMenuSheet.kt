@@ -20,7 +20,7 @@ class CardMenuSheet : BaseScreen() {
     fun isShown(timeout: Duration = Duration.ofSeconds(2)): Boolean = runCatching { waits.anyVisible(call, cancelDispatch, markCompleted, moveToQueue, timeout = timeout) }.isSuccess
 
     /** The visible entries, in order, as the driver reads them (the call entry shows the rider's number). */
-    fun entries(): List<String> = listOf(moveToQueue, changePickup, changeDropoff, cancelDispatch, markCompleted, call)
+    fun entries(): List<String> = listOf(moveToQueue, cancelDispatch, changePickup, changeDropoff, markCompleted, call)
         .mapNotNull { by -> driver.findElements(by).firstOrNull()?.takeIf { runCatching { it.isDisplayed }.getOrDefault(false) }?.text }
 
     fun callText(): String = textOf(call)

@@ -1,12 +1,12 @@
-# All automated tests (158)
+# All automated tests (161)
 
-Collected from the test source on 2026-11-23. Repository: `tms-driverapp-e2e-tests`.
+Collected from the test source on 2026-11-23. Repository: `tms-driverapp-e2e-tests`. Regenerate with `python3 scripts/docs/generate_all_tests.py`.
 
 | Kind | Tests | Notes |
 |---|---|---|
-| Device tests (emulator, staging) | 115 | **74 in the smoke suite** (`smokeTest`), 111 in the regression (`regressionTest`, Tue/Thu), 3 skipped, 1 manual only (real SMS) |
+| Device tests (emulator, staging) | 118 | **76 in the smoke suite** (`smokeTest`), 114 in the regression (`regressionTest`, Tue/Thu), 3 skipped, 1 manual only (real SMS) |
 | No-device tests (stub servers) | 43 | run on every push with `./gradlew test` |
-| **Total** | **158** | exploration helpers are not counted (they assert nothing) |
+| **Total** | **161** | exploration helpers are not counted (they assert nothing) |
 
 
 ## Launch smoke
@@ -84,7 +84,7 @@ Collected from the test source on 2026-11-23. Repository: `tms-driverapp-e2e-tes
 | 39 | PAX-006 / REQ-003 | Cancel Dispatch asks for a reason and then shows the ride as cancelled by the driver | Smoke + regression |
 | 40 | PAX-004 / REQ-007 | Move to Request Queue puts the ride back among the unassigned requests | Smoke + regression |
 | 41 | PAX-001 | The Assigned card shows the room number, the flight number and the note | Smoke + regression |
-| 42 | PAX-001 | The rider details sheet shows the room number and the flight number | Skipped: the rider details sheet in the trip view does not show the room and flight numbers although the ride has them (the Requests card does). Enable when fi |
+| 42 | PAX-001 | The rider details sheet shows the room number and the flight number | Skipped: Known issue, the developer is fixing it: the rider details sheet in the trip view does not show the room and flight numbers although the ride has them |
 | 43 | PAX-007 | Cancelling with the reason 'Other' asks for text, and DONE stays off until some is typed | Smoke + regression |
 | 44 | REQ-006 | A finished ride on the Completed tab offers only the rider's number in its menu | Smoke + regression |
 | 45 | PAX-005 extra | Once the trip has started, the card menu no longer offers Move to Request Queue | Smoke + regression |
@@ -97,7 +97,7 @@ Collected from the test source on 2026-11-23. Repository: `tms-driverapp-e2e-tes
 | 47 | PAX-008 | Change Drop-off lists the current stops, can be cancelled, and moves the drop-off to the stop the driver picks | Smoke + regression |
 | 48 | PAX-003 | PICK UP from the rider sheet needs a second tap to confirm | Smoke + regression |
 | 49 | PAX-009 | ASSIGN TO DRIVER opens the Assign Driver screen with the available drivers, and leaving it keeps the ride with this driver | Smoke + regression |
-| 50 | PAX-009 | A ride assigned to another driver leaves this driver and shows up for the other one | Skipped: the Assign Driver list does not offer 'Automation Driver 2' (id 3355) even with the account on duty and (reported) open in another app, so a ride cann |
+| 50 | PAX-009 | A ride assigned to another driver leaves this driver and shows up for the other one | Skipped: Waiting on the developer / a signed-in second driver: the Assign Driver list does not offer 'Automation Driver 2' (id 3355) even with the account on d |
 
 ## T6 Taking a ride from the queue
 
@@ -111,7 +111,7 @@ Collected from the test source on 2026-11-23. Repository: `tms-driverapp-e2e-tes
 | 56 | INT-013 | With location services off, assigning a ride asks for GPS access and assigns nothing | Regression only |
 | 57 | INT-014 | A party larger than the shuttle's 15 seats cannot be assigned | Smoke + regression |
 | 58 | INT-021 | A long rider name with accents and punctuation is shown without hiding the assign buttons | Smoke + regression |
-| 59 | INT-007 | ASSIGN TO DRIVER hands a waiting ride to another driver, and it leaves the queue | Skipped: the Assign Driver list does not offer 'Automation Driver 2' (id 3355) even with the account on duty and (reported) open in another app, so a ride cann |
+| 59 | INT-007 | ASSIGN TO DRIVER hands a waiting ride to another driver, and it leaves the queue | Skipped: Waiting on the developer / a signed-in second driver: the Assign Driver list does not offer 'Automation Driver 2' (id 3355) even with the account on d |
 | 60 | INT-022 | The largest party the rider app allows (75) is shown correctly, and one more (76) is refused by the Rider API | Smoke + regression |
 | 61 | INT-023 | An off-duty driver can see and take a waiting ride, and starting the trip puts the driver back on duty | Regression only |
 | 62 | INT-017 | A ride that belongs to another driver can be taken over with ASSIGN TO SELF and CONFIRM, and CANCEL leaves it where it was | Regression only |
@@ -224,65 +224,73 @@ Collected from the test source on 2026-11-23. Repository: `tms-driverapp-e2e-tes
 | 114 | PROF-002 | Refusing the camera permission does nothing and says nothing | Smoke + regression |
 | 115 | PROF-003 | Delete Account asks twice; answering NO keeps the account and the driver signed in | Smoke + regression |
 
+## T14 Search on the Requests screen
+
+| # | IDs | Test | Suites |
+|---|---|---|---|
+| 116 | SRCH-001 | Search lists a waiting ride under 'Request Queue' with the assign buttons, and a ride the rider cancelled under 'Completed' without them | Smoke + regression |
+| 117 | SRCH-004 | The menu on a waiting ride's search result is the same as on its Requests card: Reject Request, Change Pick-up, Change Drop-off, Mark as Completed and the number | Smoke + regression |
+| 118 | INT-020 | A ride that arrived while the app had no network is on the Requests tab after pulling to refresh | Regression only |
+
 ## Configuration checks
 
 | # | IDs | Test | Suites |
 |---|---|---|---|
-| 116 | - | staging resolves the suffixed package and splash activity | No device (every push) |
-| 117 | - | development resolves its package | No device (every push) |
-| 118 | - | production flavor is rejected | No device (every push) |
-| 119 | - | unknown environment file fails clearly | No device (every push) |
-| 120 | - | resource ids use the flavor application id | No device (every push) |
+| 119 | - | staging resolves the suffixed package and splash activity | No device (every push) |
+| 120 | - | development resolves its package | No device (every push) |
+| 121 | - | production flavor is rejected | No device (every push) |
+| 122 | - | unknown environment file fails clearly | No device (every push) |
+| 123 | - | resource ids use the flavor application id | No device (every push) |
 
 ## Driver API client (stub server)
 
 | # | IDs | Test | Suites |
 |---|---|---|---|
-| 121 | - | A dispatcher with the right gateway credential and passcode can log in | No device (every push) |
-| 122 | - | A wrong gateway credential is reported as 401 even though the HTTP status is 200 | No device (every push) |
-| 123 | - | A missing gateway credential is reported as 401 | No device (every push) |
-| 124 | - | A wrong passcode is reported as 400 | No device (every push) |
-| 125 | - | A ride waiting in the queue is found by its rider name | No device (every push) |
-| 126 | - | Waiting for a ride that never appears fails with a clear message | No device (every push) |
-| 127 | - | Assigning a queued ride to a driver succeeds and removes it from the queue | No device (every push) |
-| 128 | - | Assigning a ride that does not exist is reported as failed (code 400) | No device (every push) |
-| 129 | - | An assigned ride can be completed or cancelled with a readable confirmation message | No device (every push) |
-| 130 | - | A dispatch action on an unknown dispatch is rejected with code 400 | No device (every push) |
-| 131 | - | Proceeding after an assignment starts the trip (trip_started goes from 0 to 1) | No device (every push) |
-| 132 | - | A ride still waiting in the queue is cancelled with the queue call, an assigned ride with the dispatch call | No device (every push) |
-| 133 | - | The dashboard reports how many dispatches the driver has (0, then 1 after an assignment) | No device (every push) |
-| 134 | - | The driver id is read from the login token | No device (every push) |
-| 135 | - | Cleanup never throws even when the ride is already gone | No device (every push) |
-| 136 | - | Production and preproduction hosts are refused, staging is accepted | No device (every push) |
-| 137 | - | Credentials never appear when the connection settings are logged | No device (every push) |
+| 124 | - | A dispatcher with the right gateway credential and passcode can log in | No device (every push) |
+| 125 | - | A wrong gateway credential is reported as 401 even though the HTTP status is 200 | No device (every push) |
+| 126 | - | A missing gateway credential is reported as 401 | No device (every push) |
+| 127 | - | A wrong passcode is reported as 400 | No device (every push) |
+| 128 | - | A ride waiting in the queue is found by its rider name | No device (every push) |
+| 129 | - | Waiting for a ride that never appears fails with a clear message | No device (every push) |
+| 130 | - | Assigning a queued ride to a driver succeeds and removes it from the queue | No device (every push) |
+| 131 | - | Assigning a ride that does not exist is reported as failed (code 400) | No device (every push) |
+| 132 | - | An assigned ride can be completed or cancelled with a readable confirmation message | No device (every push) |
+| 133 | - | A dispatch action on an unknown dispatch is rejected with code 400 | No device (every push) |
+| 134 | - | Proceeding after an assignment starts the trip (trip_started goes from 0 to 1) | No device (every push) |
+| 135 | - | A ride still waiting in the queue is cancelled with the queue call, an assigned ride with the dispatch call | No device (every push) |
+| 136 | - | The dashboard reports how many dispatches the driver has (0, then 1 after an assignment) | No device (every push) |
+| 137 | - | The driver id is read from the login token | No device (every push) |
+| 138 | - | Cleanup never throws even when the ride is already gone | No device (every push) |
+| 139 | - | Production and preproduction hosts are refused, staging is accepted | No device (every push) |
+| 140 | - | Credentials never appear when the connection settings are logged | No device (every push) |
 
 ## Rider API client and ride data (stub server)
 
 | # | IDs | Test | Suites |
 |---|---|---|---|
-| 138 | - | The supplied stop list loads with ten stops, each with an id, name and coordinates | No device (every push) |
-| 139 | - | A random pickup and drop-off pair always uses two different stops | No device (every push) |
-| 140 | - | A new ride keeps the template's rider details and gets the unique name that was asked for | No device (every push) |
-| 141 | - | The request JSON has the riders and both stops, and keeps flight and room as null | No device (every push) |
-| 142 | - | A ride without a note leaves the note out of the request instead of sending null (staging rejects null) | No device (every push) |
-| 143 | - | A guest token is obtained with the gateway credential and used to create the ride | No device (every push) |
-| 144 | - | A ready Bearer token is used directly, without calling the guest-user endpoint | No device (every push) |
-| 145 | - | A wrong gateway credential is reported as 401 even though the HTTP status is 200 | No device (every push) |
-| 146 | - | A wrong organisation token-id is rejected with 400 | No device (every push) |
-| 147 | - | A ride with the same pickup and drop-off is rejected with 400 | No device (every push) |
-| 148 | - | A ride created through the Rider API shows up in the Driver API queue and can be assigned | No device (every push) |
-| 149 | - | A production rider API host is refused and credentials never appear in the settings text | No device (every push) |
-| 150 | - | The rider can cancel a ride with its ride code and a reason, and a missing reason is refused | No device (every push) |
+| 141 | - | The supplied stop list loads with ten stops, each with an id, name and coordinates | No device (every push) |
+| 142 | - | A random pickup and drop-off pair always uses two different stops | No device (every push) |
+| 143 | - | A new ride keeps the template's rider details and gets the unique name that was asked for | No device (every push) |
+| 144 | - | The request JSON has the riders and both stops, and keeps flight and room as null | No device (every push) |
+| 145 | - | A ride without a note leaves the note out of the request instead of sending null (staging rejects null) | No device (every push) |
+| 146 | - | A guest token is obtained with the gateway credential and used to create the ride | No device (every push) |
+| 147 | - | A ready Bearer token is used directly, without calling the guest-user endpoint | No device (every push) |
+| 148 | - | A wrong gateway credential is reported as 401 even though the HTTP status is 200 | No device (every push) |
+| 149 | - | A wrong organisation token-id is rejected with 400 | No device (every push) |
+| 150 | - | A ride with the same pickup and drop-off is rejected with 400 | No device (every push) |
+| 151 | - | A ride created through the Rider API shows up in the Driver API queue and can be assigned | No device (every push) |
+| 152 | - | A production rider API host is refused and credentials never appear in the settings text | No device (every push) |
+| 153 | - | The rider can cancel a ride with its ride code and a reason, and a missing reason is refused | No device (every push) |
 
 ## Ride fixture and cleanup (stub servers)
 
 | # | IDs | Test | Suites |
 |---|---|---|---|
-| 151 | - | An assigned ride is created with the requested party size and ADA flag, found in the queue and assigned | No device (every push) |
-| 152 | - | Cleanup cancels every ride the test created and leaves the driver with no active ride | No device (every push) |
-| 153 | - | Cleanup also removes a ride that was created but never assigned | No device (every push) |
-| 154 | - | Rides left on the driver by an earlier run are cleared before the test starts | No device (every push) |
-| 155 | - | If a ride cannot be cancelled, cleanup fails loudly instead of leaving it behind quietly | No device (every push) |
-| 156 | - | A ride that was picked up cannot be cancelled, so cleanup finishes the trip instead | No device (every push) |
-| 157 | - | A picked-up ride left over from an earlier run is cleared before the test starts | No device (every push) |
-| 158 | - | Every ride gets a different rider name | No device (every push) |
+| 154 | - | An assigned ride is created with the requested party size and ADA flag, found in the queue and assigned | No device (every push) |
+| 155 | - | Cleanup cancels every ride the test created and leaves the driver with no active ride | No device (every push) |
+| 156 | - | Cleanup also removes a ride that was created but never assigned | No device (every push) |
+| 157 | - | Rides left on the driver by an earlier run are cleared before the test starts | No device (every push) |
+| 158 | - | If a ride cannot be cancelled, cleanup fails loudly instead of leaving it behind quietly | No device (every push) |
+| 159 | - | A ride that was picked up cannot be cancelled, so cleanup finishes the trip instead | No device (every push) |
+| 160 | - | A picked-up ride left over from an earlier run is cleared before the test starts | No device (every push) |
+| 161 | - | Every ride gets a different rider name | No device (every push) |

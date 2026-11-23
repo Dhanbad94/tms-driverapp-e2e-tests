@@ -1,6 +1,6 @@
 # Next features to automate (Phases T13 to T17)
 
-Status: **plan only. Nothing here is automated yet.** Written 2026-11-23 while the smoke run was using the emulator.
+Status: **T14 is done except SRCH-002 and SRCH-003 (blocked by staging); T13 and T15 to T17 are planned only.** Written 2026-11-23.
 Source: a read of the ASAP-mode code for the areas not yet covered (profile save, passcode, forgot passcode, timeline, search, organisation, passenger sheet, app-disabled, version checks, session edges, tracker-state dialogs), checked against what the 158 existing tests already do. Statements about the source are marked **CONFIRM** where only the live app can settle them. Test ids use the prefixes below.
 
 ## 1. What the read settled (no new tests needed)
@@ -42,6 +42,17 @@ Risk: the QA driver's name is read by many other tests ("Hi, Automation Driver",
 | SRCH-004 | P | The three-dots menu on a search result is the same as on the Requests card | Same entries per card state | CODE | P3 |
 | INT-020 | C | Pull to refresh on the Requests tab brings a ride created while the app was open | Ride appears; works now because a ride can be created through the Rider API without signing the app out (`liveRide`) | CODE | P3 |
 
+#### T14 result (live, staging, emulator, 2026-11-23)
+3 tests (`RequestsSearchTest`), all passed. SRCH-002 and SRCH-003 are **blocked**: on 2026-11-23 staging answers **500 "Something went wrong" to every assignment to the QA driver** (through the API and through the app's own ASSIGN TO SELF; reproduced outside the test code with different stops and party sizes), and the Assign Driver screen no longer loads. They are not written; they wait for a fix.
+
+| Scenarios | Result |
+|---|---|
+| **SRCH-001** | Done. A waiting ride is listed under "Request Queue" with "Requested Just now", its party size, note and both assign buttons. A ride the rider cancelled is listed under "Completed" as "Canceled By Guest (at hh:mm AM/PM)" with **no** assign buttons. Searching the shared start of both names lists both, the queue section first. |
+| **SRCH-004** | Done. The three-dots menu on a **waiting** ride is Reject Request, Change Pick-up, Change Drop-off, Mark as Completed and the rider's number (different from an assigned ride's menu); it is identical on the Requests card and on the search result. |
+| **INT-020** | Done, with a finding: after the network returns, the app **lists a ride created while it was offline on its own**, even before pulling to refresh; pulling to refresh keeps it. |
+
+What the search does (new): it matches the **start** of a rider name and its **end** digits, but not digits from the middle of a name. The results cover the last 24 hours across all tabs, so test rides from earlier runs show up too ("Canceled By Driver"). On the emulator, swiping on the results while the keyboard is open is read as swipe typing and fills the box with letters (" ft"); the tests hide the keyboard first.
+
 ### T15: the rider sheet and pick-up details (QA driver only)
 
 | ID | Type | Scenario | Expected | Evidence | Pri |
@@ -73,7 +84,7 @@ Risk: the QA driver's name is read by many other tests ("Hi, Automation Driver",
 | Phase | Area | Tests (est.) | Needs |
 |---|---|---|---|
 | **T13** | Edit Profile save with restore; same-passcode change | 4 to 5 | decision 1 |
-| **T14** | Search from Requests; pull to refresh | 5 | none |
+| **T14 (done, 2 blocked)** | Search from Requests; pull to refresh | 3 tests | staging assignment (SRCH-002, 003) |
 | **T15** | Rider sheet fields; pick-up carried to Arrived; special notes | 4 to 5 | none |
 | **T16** | Several riders (no-show mix, three rides) | 3 | Driver 2 (accepted) |
 | **T17** | Timing, real device, release build, soak | 1 to 3 | decisions 3 and 4 |
