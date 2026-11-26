@@ -158,6 +158,10 @@ Repository **variables**: `TMS_DRIVER_ISD`, `TMS_DRIVER_COUNTRY` (optional), `PU
 dashboard to GitHub Pages / `gh-pages`).
 `scripts/ci/fetch-apk.sh` refuses any APK whose package is not the staging or development flavor.
 
+### One QA driver, one run at a time
+
+Every run (local, CI, the Tuesday/Thursday cron) logs in as the same QA driver on staging, and a login signs the other session out. Two runs at once make tests fail for no product reason (seen on 2026-11-26: a CI smoke run failed PROF-001 while a local run was going). CI runs are serialised by the `driver-e2e-staging` concurrency group. For local runs, start them through a runner that first waits for the CI queue and takes `/tmp/tms-qa-staging.lock`; never start a local run by hand while a CI or cron run is active (`gh run list`).
+
 ## Custom report
 
 `python3 scripts/generate_report.py` (standard library only) turns `build/test-results` (JUnit XML) plus
