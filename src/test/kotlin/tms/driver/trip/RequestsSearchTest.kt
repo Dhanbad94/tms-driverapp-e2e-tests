@@ -15,19 +15,23 @@ import org.slf4j.LoggerFactory
 import tms.driver.base.DriverExtension
 import tms.driver.core.config.Credentials
 import tms.driver.core.device.Adb
+import tms.driver.core.driver.DriverSession
+import tms.driver.core.wait.Toasts
 import tms.driver.fixtures.RideFixture
 import tms.driver.fixtures.RideSpec
 import tms.driver.fixtures.TripFixtureExtension
 import tms.driver.flows.LoginFlow
 import tms.driver.screens.home.OdHomeScreen
+import tms.driver.screens.requests.AssignmentBar
+import tms.driver.screens.requests.CapacityDialog
 import tms.driver.screens.requests.RequestsTab
 import tms.driver.screens.requests.RideRequestsScreen
 import java.time.Duration
 
 /**
  * Phase T14 (SRCH-001, SRCH-004 and INT-020 of docs/next-features-plan.md): what the search shows for rides that need no assignment (a waiting
- * ride and one the rider cancelled), the menu on a search result, and pull to refresh. NOT here: assigning from a search result and its
- * capacity dialog (SRCH-002, SRCH-003): on 2026-11-23 staging answered 500 to every assignment to the QA driver, so they wait for a fix.
+ * ride and one the rider cancelled), the menu on a search result, assigning from a search result (and its capacity dialog), and pull to
+ * refresh. Assignment needs the driver inside the organisation's region: DriverExtension puts the emulator in Chicago.
  */
 @Tag("trip")
 @Tag("device")
@@ -96,6 +100,68 @@ class RequestsSearchTest {
         assertTrue(search.sectionTitles().containsAll(listOf("Request Queue", "Completed")), "Sections: ${search.sectionTitles()}")
         assertTrue(search.sectionTitles().indexOf("Request Queue") < search.sectionTitles().indexOf("Completed"))
         assertTrue(search.card(waiting.riderName) != null && search.card(cancelled.riderName) != null)
+    }
+
+    @Tag("smoke")
+    @Test
+    @DisplayName("[SRCH-002] ASSIGN TO SELF on a search result stages the ride, CANCEL undoes it, and CONFIRM assigns it with a toast and returns to Ride Requests")
+    fun assignFromSearch(rides: RideFixture) {
+        step("Given a ride is waiting and the driver has found it through the search")
+        val ride = rides.queuedRide(spec(276, note = "Search assign"))
+        val requests = openRequests()
+        val search = requests.openSearch().type(ride.riderName.takeLast(8))
+        val card = search.card(ride.riderName) ?: throw AssertionError("The ride should be listed")
+
+        step("When the driver taps ASSIGN TO SELF, then the card reads ASSIGNED TO YOU and a bar offers CANCEL and CONFIRM")
+        card.tapAssignToSelf()
+        val bar = AssignmentBar().waitUntilShown()
+        assertEquals("CANCEL", bar.cancelText())
+        assertEquals("CONFIRM", bar.confirmText())
+        assertEquals("ASSIGNED TO YOU", search.card(ride.riderName)!!.assignedToYouText())
+
+        step("When the driver taps CANCEL, then the bar goes and the card is no longer staged")
+        bar.cancel()
+        assertTrue(bar.isGone())
+        assertTrue(search.card(ride.riderName)!!.areAssignButtonsDisplayed(), "The assign buttons should be offered again")
+
+        step("When the driver stages it again and taps CONFIRM, then a toast confirms and the app returns to Ride Requests")
+        search.card(ride.riderName)!!.tapAssignToSelf()
+        AssignmentBar().waitUntilShown()
+        Toasts.mark(DriverSession.driver)
+        AssignmentBar().confirm()
+        assertEquals("Assigned Driver Successfully.", Toasts.read(DriverSession.driver, Duration.ofSeconds(10)))
+        assertTrue(requests.waitUntilShown().isShown(Duration.ofSeconds(20)), "The Ride Requests screen should be shown again")
+
+        step("And Home shows the ride as the driver's dispatch")
+        requests.goHome()
+        val home = OdHomeScreen()
+        assertTrue(home.waitForTrip(Duration.ofSeconds(30)), "Home should show the ride")
+        assertEquals("You have 1 dispatch", home.summaryText())
+    }
+
+    @Tag("smoke")
+    @Test
+    @DisplayName("[SRCH-003] A party larger than the shuttle's seats, staged from a search result, gets the capacity dialog and stays unassigned")
+    fun capacityFromSearch(rides: RideFixture) {
+        step("Given a ride for 16 guests is waiting and the driver has found it through the search")
+        val ride = rides.queuedRide(spec(277, party = 16, note = "Too big"))
+        val requests = openRequests()
+        val search = requests.openSearch().type(ride.riderName.takeLast(8))
+        val card = search.card(ride.riderName) ?: throw AssertionError("The ride should be listed")
+
+        step("When the driver stages it and taps CONFIRM, then a dialog says the shuttle does not have enough capacity")
+        card.tapAssignToSelf()
+        AssignmentBar().waitUntilShown().confirm()
+        val dialog = CapacityDialog().waitUntilShown()
+        assertTrue(dialog.messageText().startsWith("Shuttle doesn't have enough capacity"), dialog.messageText())
+
+        step("And closing the dialog leaves the ride unassigned on the server")
+        dialog.close()
+        val bar = AssignmentBar()
+        if (bar.isShown(Duration.ofSeconds(3))) bar.cancel()
+        search.close()
+        requests.waitUntilShown()
+        assertTrue(requests.open(RequestsTab.ASSIGNED).card(ride.riderName, Duration.ofSeconds(3)) == null, "The ride must not be under Assigned")
     }
 
     @Tag("smoke")

@@ -1,6 +1,6 @@
 # Next features to automate (Phases T13 to T17)
 
-Status: **T14 is done except SRCH-002 and SRCH-003 (blocked by staging); T13 and T15 to T17 are planned only.** Written 2026-11-23.
+Status: **T13 (5), T14 (5), T15 (4, 1 skipped), T16 (2) and the PERF-001 part of T17 (1) are done and passed on 2026-11-26. Still open: ENV-001 (real device, release build, needs hardware from you) and the optional soak ENV-002.** Written 2026-11-23.
 Source: a read of the ASAP-mode code for the areas not yet covered (profile save, passcode, forgot passcode, timeline, search, organisation, passenger sheet, app-disabled, version checks, session edges, tracker-state dialogs), checked against what the 158 existing tests already do. Statements about the source are marked **CONFIRM** where only the live app can settle them. Test ids use the prefixes below.
 
 ## 1. What the read settled (no new tests needed)
@@ -43,7 +43,7 @@ Risk: the QA driver's name is read by many other tests ("Hi, Automation Driver",
 | INT-020 | C | Pull to refresh on the Requests tab brings a ride created while the app was open | Ride appears; works now because a ride can be created through the Rider API without signing the app out (`liveRide`) | CODE | P3 |
 
 #### T14 result (live, staging, emulator, 2026-11-23)
-3 tests (`RequestsSearchTest`), all passed. SRCH-002 and SRCH-003 are **blocked**: on 2026-11-23 staging answers **500 "Something went wrong" to every assignment to the QA driver** (through the API and through the app's own ASSIGN TO SELF; reproduced outside the test code with different stops and party sizes), and the Assign Driver screen no longer loads. They are not written; they wait for a fix.
+5 tests (`RequestsSearchTest`), all passed. SRCH-002 and SRCH-003 were first blocked (see developer-findings section 1; solved by putting the emulator in Chicago): on 2026-11-23 staging answers **500 "Something went wrong" to every assignment to the QA driver** (through the API and through the app's own ASSIGN TO SELF; reproduced outside the test code with different stops and party sizes), and the Assign Driver screen no longer loads. They are not written; they wait for a fix.
 
 | Scenarios | Result |
 |---|---|
@@ -62,6 +62,22 @@ What the search does (new): it matches the **start** of a rider name and its **e
 | PSNG-003 | P | The sheet shows "Picked" and "Dropped" with times once those steps are done | Times shown only when set | CODE | P2 |
 | PSNG-004 | C | Long and special notes (300 characters, accents, quotes, `<b>tags</b>`, emoji) are shown as text without breaking the card or the sheet | Text shown as typed; layout intact; buttons reachable | CODE | P2 |
 | PSNG-005 | C | A rider with a label ("associate") shows the chip | Needs a ride with a label (**CONFIRM** whether the Rider API can set one) | CODE | P3 |
+
+#### T16 and T17 result (live, staging, emulator, 2026-11-26)
+`SeveralRidersTest` (MULTI-001, MULTI-002/003) and `PerformanceTest` (PERF-001) passed. All rides are assigned to the QA driver **before** the trip starts, so no second driver is involved and all three are smoke. Measured: login to Home 6.8 s, START TRIP to trip view 4.1 s, I've Arrived to Arrived screen 1.9 s (limits 10, 10, 5). The three-rides test also covers the case that a no-show's drop-off stop disappears from the route.
+
+#### T13 result (live, staging, emulator, 2026-11-26)
+`AccountChangesTest`, 5 tests passed. ACC-002 and ACC-003 are smoke (they save nothing); ACC-001 and ACC-005 change account data and ACC-004 switches the network, so they are regression only.
+- Save toast "Profile updated successfully"; the Profile title shows the new name at once; the original (empty email, "Automation Driver") was restored by the same test and checked.
+- SAVE is off at first and **stays on** after typing the original value back (a "was touched" flag). Names stop at 20 characters. The QA driver's email is empty, which is accepted.
+- Same-passcode change works: "Set New Passcode" then the alert "Passcode Updated" / "Your passcode is successfully updated.", OK returns to Profile and the session continues.
+
+#### T15 result (live, staging, emulator, 2026-11-26)
+`RiderSheetTest`: PSNG-002, 003, 004 passed; PSNG-001 skipped. PSNG-005 dropped (the Rider API cannot set a label).
+- **PSNG-001 answer:** room and flight are missing from the rider sheet at **both** entry points (trip view and Arrived screen), so it is the sheet or the data, not a trip-view problem. The Requests card shows them.
+- Tapping PICK UP in the sheet shows "Picked" and CANCEL / CONFIRM; CONFIRM takes the trip straight to the drop-off stop (the pick-up stop disappears). Afterwards the sheet shows "Picked" with "Now" and offers DROP OFF (trip view) or nothing (Arrived screen).
+- A 300-character note with quotes, `<b>` tags, accents and symbols is shown exactly as typed.
+- Observation: on the Arrived screen at the drop-off the seat counter reads 0 with the rider still on board (to ask the developers).
 
 ### T16: more than one rider (uses Driver 2 as operator, extended group)
 
@@ -84,7 +100,7 @@ What the search does (new): it matches the **start** of a rider name and its **e
 | Phase | Area | Tests (est.) | Needs |
 |---|---|---|---|
 | **T13** | Edit Profile save with restore; same-passcode change | 4 to 5 | decision 1 |
-| **T14 (done, 2 blocked)** | Search from Requests; pull to refresh | 3 tests | staging assignment (SRCH-002, 003) |
+| **T14 (done)** | Search from Requests; pull to refresh | 5 tests | none |
 | **T15** | Rider sheet fields; pick-up carried to Arrived; special notes | 4 to 5 | none |
 | **T16** | Several riders (no-show mix, three rides) | 3 | Driver 2 (accepted) |
 | **T17** | Timing, real device, release build, soak | 1 to 3 | decisions 3 and 4 |

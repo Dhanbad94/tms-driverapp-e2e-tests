@@ -388,9 +388,45 @@ Each test assigns one ride (from "Terminal 5E" to "Door 3 - Bus/Shuttle Ctr") be
 
 **[SRCH-001] Search lists a waiting ride under "Request Queue" with the assign buttons, and a ride the rider cancelled under "Completed" without them** — "Canceled By Guest (at hh:mm)".
 
+**[SRCH-002] ASSIGN TO SELF on a search result stages the ride; CANCEL undoes it; CONFIRM assigns it** — bar with CANCEL / CONFIRM, toast "Assigned Driver Successfully.", the app returns to Ride Requests and Home shows "You have 1 dispatch".
+
+**[SRCH-003] A 16-guest party staged from a search result and confirmed gets the capacity dialog** — "Shuttle doesn't have enough capacity, please select another."; after closing it the ride is not under Assigned.
+
 **[SRCH-004] The menu on a waiting ride's search result is the same as on its Requests card** — Reject Request, Change Pick-up, Change Drop-off, Mark as Completed and the rider's number.
 
 **[INT-020] A ride that arrived while the app had no network is on the Requests tab after pulling to refresh** — the app already lists it once the network is back.
+
+## Rider details sheet (Phase T15)
+
+**[PSNG-002] PICK UP in the rider sheet shows "Picked"; CONFIRM moves the trip on to the drop-off** — the Arrived screen there has no pick-ups, lists the rider under DROP-OFFS and offers COMPLETE TRIP.
+
+**[PSNG-003] After the pick-up the sheet shows "Picked" with the time "Now"** — the trip view offers DROP OFF; the Arrived screen's sheet has no button; going back keeps the pick-up.
+
+**[PSNG-004] A 300-character note with quotes, tags, accents and symbols is shown exactly as typed** — in the trip view and on the Arrived screen; PICK UP and CANCEL stay reachable.
+
+**[PSNG-001] (skipped, developer fix) Room and flight number in the sheet opened from the Arrived screen** — they are missing there too, so the problem is not specific to the trip view.
+
+## Account changes with restore (Phase T13)
+
+**[ACC-001] Saving a new last name and an email updates the Profile title and the email** — toast "Profile updated successfully"; the original name and email are saved back in a `finally` block and checked.
+
+**[ACC-002] SAVE is off until something is touched, then stays on** — even after typing the original value back or adding only a space.
+
+**[ACC-003] The first and last names stop at 20 characters** — 25 typed letters leave 20; leaving without saving keeps the originals.
+
+**[ACC-004] Saving while offline keeps the driver on Edit Profile with a connectivity message** — nothing is saved.
+
+**[ACC-005] Changing the passcode to the same value ends with "Passcode Updated"** — "Your passcode is successfully updated."; OK returns to Profile, still signed in.
+
+## Several riders on one trip (Phase T16)
+
+**[MULTI-001] Two riders at one stop, one picked up and one a no-show** — only the picked-up rider's seats count; GO TO NEXT STOP needs both decided; the no-show's drop-off stop is skipped.
+
+**[MULTI-002 / MULTI-003] Three rides on one trip** — 7 seats counted at the pick-up; the middle stop lists only its two riders and is passable at once; the last stop lists the third; COMPLETE TRIP ends the trip. (Assigned before the trip starts, so no second driver is needed.)
+
+## Response times (Phase T17)
+
+**[PERF-001] Login reaches Home within 10 s, START TRIP reaches the trip view within 10 s, I've Arrived reaches the Arrived screen within 5 s** — seen on the emulator: 6.8 s, 4.1 s, 1.9 s.
 
 ## Not automated (decisions)
 

@@ -19,6 +19,11 @@ class EditProfileScreen : BaseScreen() {
     fun firstNameText(): String = waits.visible(firstName).text
     fun lastNameText(): String = waits.visible(lastName).text
 
+    fun emailText(): String = waits.visible(email).text
+    /** Whether SAVE is turned on (it sits below the fold, so the screen is scrolled to it first). */
+    fun isSaveEnabled(): Boolean { scrollTo("btn_apply"); return waits.visible(save).isEnabled }
+    fun isShown(): Boolean = waits.isVisibleNow(firstName)
+
     fun setFirstName(value: String) = replace(firstName, value)
     fun setLastName(value: String) = replace(lastName, value)
     fun setEmail(value: String) = replace(email, value)

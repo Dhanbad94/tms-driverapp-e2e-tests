@@ -38,7 +38,8 @@ Collected by the automation suite. Each item has the evidence and a suggested fi
 
 - Change Drop-off fails silently: if the stop list cannot load the app returns to the trip view (or Home when offline) with no message, and a failed UPDATE shows nothing.
 - A second ride can only be handed over to a running trip with the same pickup as the first ride; a different pickup answers 500 "Something went wrong".
-- The trip-view rider sheet hides room and flight although the Requests card shows them (PAX-001).
+- The rider sheet hides room and flight on the trip view AND on the Arrived screen, although the Requests card shows them (PAX-001, PSNG-001).
+- On the Arrived screen at the drop-off stop the seat counter reads 0 while the picked-up rider is still on board (seen 2026-11-26; meant that way?).
 - Driver-API actions on a not-started ride (cancel, complete, change driver) do not produce the "Dispatch canceled / completed / has changed" sheets the app has code for.
 - Smaller items: "Please enter valid name " has a trailing space; the photo size check only triggers at 2 MB or more; a denied camera permission shows no message; the Dispatch Log status bar has no text.
 - Dead code to clean up: Mark Arrived dialog, the map's "shuttle location" banner, `GuestInfoAdapter`, `FragmentSearchRides`, `ChangeStopFragment`, `DispatchLogFragment`, the hidden side menu, `ChangeShuttleFragment`, about 20 unused strings.

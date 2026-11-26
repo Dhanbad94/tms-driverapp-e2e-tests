@@ -56,6 +56,8 @@ class ArrivedScreen : BaseScreen() {
     fun tapPickedUpAt(index: Int) { driver.findElements(pickedUpBox)[index].click() }
     fun pickedUpBoxCount(): Int = driver.findElements(pickedUpBox).size
     fun tapNoShow() = tap(noShowBox)
+    /** The NO SHOW box of row [index] (0 = first) when several riders are listed. */
+    fun tapNoShowAt(index: Int) { driver.findElements(noShowBox)[index].click() }
 
     /** Opens the rider's detail sheet from the first row of the pick-up (or drop-off) list. */
     fun tapRider(inDropoffs: Boolean = false): RiderDetailsSheet {

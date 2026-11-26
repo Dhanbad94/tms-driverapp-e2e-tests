@@ -140,7 +140,11 @@ class RiderDetailsSheet : BaseScreen() {
     /** Room and flight number of the ride, or null when the sheet does not show them. */
     fun roomText(): String? = driver.findElements(Ids.by("tv_room")).firstOrNull()?.takeIf { it.isDisplayed }?.text
     fun flightText(): String? = driver.findElements(Ids.by("tv_flight")).firstOrNull()?.takeIf { it.isDisplayed }?.text
-    fun actionText(): String = textOf(action)          // "PICK UP"
+    fun actionText(): String = textOf(action)          // "PICK UP", then "CONFIRM", then "DROP OFF"
+    /** "Picked" once the rider is (about to be) picked up, else null. */
+    fun pickedLabel(): String? = driver.findElements(Ids.by("atv_pickup")).firstOrNull()?.takeIf { it.isDisplayed }?.text
+    /** The time next to "Picked", for example "Now"; null while the rider is not picked up. */
+    fun pickedTime(): String? = driver.findElements(Ids.by("atv_pickup_time")).firstOrNull()?.takeIf { it.isDisplayed }?.text
     /** True when the sheet offers an action button (PICK UP is offered from the trip view, not from the arrived screen). */
     fun isActionShown(): Boolean = driver.findElements(action).any { runCatching { it.isDisplayed }.getOrDefault(false) }
     fun cancel() = tap(cancel)
