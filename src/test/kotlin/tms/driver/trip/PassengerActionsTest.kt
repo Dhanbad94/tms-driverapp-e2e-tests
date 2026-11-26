@@ -173,7 +173,6 @@ class PassengerActionsTest {
     }
 
     @Test
-    @Disabled("Waiting on the developer / a signed-in second driver: the Assign Driver list does not offer 'Automation Driver 2' (id 3355) even with the account on duty and (reported) open in another app, so a ride cannot be handed to it. Enable when it is listed.")
     @DisplayName("[PAX-009] A ride assigned to another driver leaves this driver and shows up for the other one")
     fun assignToAnotherDriver(rides: RideFixture) {
         val secondConfig = DriverApiConfig.forSecondDriverFromEnvironment()
@@ -196,14 +195,16 @@ class PassengerActionsTest {
             assign.confirm()
 
             step("Then the ride leaves the Assigned tab and the other driver has it")
-            assertTrue(requests.waitUntilShown().open(RequestsTab.ASSIGNED).emptyMessageText(Duration.ofSeconds(30)) != null, "The Assigned tab should be empty")
-            val theirs = DriverApiClient.login(secondConfig!!).myActiveRides().map { it.name }
-            assertTrue(theirs.any { it.equals(ride.riderName, ignoreCase = true) }, "The second driver should have '${ride.riderName}', has $theirs")
+            // The ride stays on the Assigned tab (it lists every driver's rides) but now names the other driver on its first button, and the QA driver has no trip.
+            val moved = requests.waitUntilShown().open(RequestsTab.ASSIGNED).card(ride.riderName, Duration.ofSeconds(30)) ?: throw AssertionError("The ride should still be listed under Assigned")
+            assertTrue(moved.assignButtonText().orEmpty().startsWith("AUTOMATION"), "The first button should name the other driver, but reads '${moved.assignButtonText()}'")
+            val theirs = DriverApiClient.login(secondConfig!!).myActiveRides().map { it.id }
+            assertTrue(ride.dispatchId in theirs, "The second driver should have ride ${ride.dispatchId}, has $theirs")
         } finally {
             // The ride may now sit with the second driver, so it is cancelled from that account (only the ride this test created).
             runCatching {
                 val client = DriverApiClient.login(secondConfig!!)
-                client.myActiveRides().filter { it.name.equals(ride.riderName, ignoreCase = true) }.forEach { client.cancelRide(it.id, "E2E teardown") }
+                client.myActiveRides().filter { it.id == ride.dispatchId }.forEach { client.cancelRide(it.id, "E2E teardown") }
             }.onFailure { LoggerFactory.getLogger("cleanup").warn("Could not clean the second driver: {}", it.message) }
         }
     }

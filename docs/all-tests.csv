@@ -48,7 +48,7 @@ No,Group,Class,Scenario IDs,Test,Type,Suites,Note
 47,T5 Rider sheet actions,PassengerActionsTest,PAX-008,"Change Drop-off lists the current stops, can be cancelled, and moves the drop-off to the stop the driver picks",Device,Smoke + regression,
 48,T5 Rider sheet actions,PassengerActionsTest,PAX-003,PICK UP from the rider sheet needs a second tap to confirm,Device,Smoke + regression,
 49,T5 Rider sheet actions,PassengerActionsTest,PAX-009,"ASSIGN TO DRIVER opens the Assign Driver screen with the available drivers, and leaving it keeps the ride with this driver",Device,Smoke + regression,
-50,T5 Rider sheet actions,PassengerActionsTest,PAX-009,A ride assigned to another driver leaves this driver and shows up for the other one,Device,Skipped,Waiting on the developer / a signed-in second driver: the Assign Driver list does not offer 'Automation Driver 2' (id 3355) even with the account on d
+50,T5 Rider sheet actions,PassengerActionsTest,PAX-009,A ride assigned to another driver leaves this driver and shows up for the other one,Device,Regression only,
 51,T6 Taking a ride from the queue,RequestsIntakeTest,INT-001 / 002 / 003 / 004,A waiting ride is listed with its details and the two assign buttons,Device,Smoke + regression,
 52,T6 Taking a ride from the queue,RequestsIntakeTest,INT-018,"The sort sheet offers Oldest First, Newest First and Rider Name, and reorders the list",Device,Smoke + regression,
 53,T6 Taking a ride from the queue,RequestsIntakeTest,INT-019,"Search needs two characters, finds the ride by its name and says 'No Results Found' otherwise",Device,Smoke + regression,
@@ -57,7 +57,7 @@ No,Group,Class,Scenario IDs,Test,Type,Suites,Note
 56,T6 Taking a ride from the queue,RequestsIntakeTest,INT-013,"With location services off, assigning a ride asks for GPS access and assigns nothing",Device,Regression only,
 57,T6 Taking a ride from the queue,RequestsIntakeTest,INT-014,A party larger than the shuttle's 15 seats cannot be assigned,Device,Smoke + regression,
 58,T6 Taking a ride from the queue,RequestsIntakeTest,INT-021,A long rider name with accents and punctuation is shown without hiding the assign buttons,Device,Smoke + regression,
-59,T6 Taking a ride from the queue,RequestsIntakeTest,INT-007,"ASSIGN TO DRIVER hands a waiting ride to another driver, and it leaves the queue",Device,Skipped,Waiting on the developer / a signed-in second driver: the Assign Driver list does not offer 'Automation Driver 2' (id 3355) even with the account on d
+59,T6 Taking a ride from the queue,RequestsIntakeTest,INT-007,"ASSIGN TO DRIVER hands a waiting ride to another driver, whose name then shows on the ride's card",Device,Skipped,"Unstable, needs investigation: handing a WAITING ride to Automation Driver 2 through the app worked once (the card then named Driver 2) but on later r"
 60,T6 Taking a ride from the queue,RequestsIntakeTest,INT-022,"The largest party the rider app allows (75) is shown correctly, and one more (76) is refused by the Rider API",Device,Smoke + regression,
 61,T6 Taking a ride from the queue,RequestsIntakeTest,INT-023,"An off-duty driver can see and take a waiting ride, and starting the trip puts the driver back on duty",Device,Regression only,
 62,T6 Taking a ride from the queue,RequestsIntakeTest,INT-017,"A ride that belongs to another driver can be taken over with ASSIGN TO SELF and CONFIRM, and CANCEL leaves it where it was",Device,Regression only,
@@ -72,7 +72,7 @@ No,Group,Class,Scenario IDs,Test,Type,Suites,Note
 71,T7 Operator and rider events,OperatorEventsTest,INT-011 / REQ-004,When the rider cancels a waiting ride it leaves the Requests tab and shows as cancelled by the guest,Device,Regression only,
 72,T7 Operator and rider events,OperatorEventsTest,RT-006,"When the QA driver signs in somewhere else, the app is signed out and shows the Login screen",Device,Regression only,
 73,T7 Two rides,TwoRidesTest,HOME-004,A second ride can be added once the trip has started; Home then counts the stops of both rides,Device,Smoke + regression,
-74,T7 Two rides,TwoRidesTest,TRIPV-010,"With two rides, 'Go here instead' on a later stop asks for confirmation; CANCEL changes nothing and CONFIRM makes it the next stop",Device,Smoke + regression,
+74,T7 Two rides,TwoRidesTest,TRIPV-010,"With two rides, 'Go here instead' on a later stop asks for confirmation; CANCEL changes nothing and CONFIRM moves it earlier in the route",Device,Smoke + regression,
 75,T7 Two rides,TwoRidesTest,HOME-011,"When one of two rides is cancelled, Home counts only the stops left",Device,Regression only,
 76,T7 App lifecycle,StateLifecycleTest,STATE-001,Closing the app during a trip and opening it again resumes the trip,Device,Smoke + regression,
 77,T7 App lifecycle,StateLifecycleTest,STATE-002,Sending the app to the background and back keeps the trip view as it was,Device,Smoke + regression,

@@ -1,10 +1,10 @@
 # All automated tests (161)
 
-Collected from the test source on 2026-11-23. Repository: `tms-driverapp-e2e-tests`. Regenerate with `python3 scripts/docs/generate_all_tests.py`.
+Collected from the test source on 2026-11-26. Repository: `tms-driverapp-e2e-tests`. Regenerate with `python3 scripts/docs/generate_all_tests.py`.
 
 | Kind | Tests | Notes |
 |---|---|---|
-| Device tests (emulator, staging) | 118 | **76 in the smoke suite** (`smokeTest`), 114 in the regression (`regressionTest`, Tue/Thu), 3 skipped, 1 manual only (real SMS) |
+| Device tests (emulator, staging) | 118 | **76 in the smoke suite** (`smokeTest`), 115 in the regression (`regressionTest`, Tue/Thu), 2 skipped, 1 manual only (real SMS) |
 | No-device tests (stub servers) | 43 | run on every push with `./gradlew test` |
 | **Total** | **161** | exploration helpers are not counted (they assert nothing) |
 
@@ -97,7 +97,7 @@ Collected from the test source on 2026-11-23. Repository: `tms-driverapp-e2e-tes
 | 47 | PAX-008 | Change Drop-off lists the current stops, can be cancelled, and moves the drop-off to the stop the driver picks | Smoke + regression |
 | 48 | PAX-003 | PICK UP from the rider sheet needs a second tap to confirm | Smoke + regression |
 | 49 | PAX-009 | ASSIGN TO DRIVER opens the Assign Driver screen with the available drivers, and leaving it keeps the ride with this driver | Smoke + regression |
-| 50 | PAX-009 | A ride assigned to another driver leaves this driver and shows up for the other one | Skipped: Waiting on the developer / a signed-in second driver: the Assign Driver list does not offer 'Automation Driver 2' (id 3355) even with the account on d |
+| 50 | PAX-009 | A ride assigned to another driver leaves this driver and shows up for the other one | Regression only |
 
 ## T6 Taking a ride from the queue
 
@@ -111,7 +111,7 @@ Collected from the test source on 2026-11-23. Repository: `tms-driverapp-e2e-tes
 | 56 | INT-013 | With location services off, assigning a ride asks for GPS access and assigns nothing | Regression only |
 | 57 | INT-014 | A party larger than the shuttle's 15 seats cannot be assigned | Smoke + regression |
 | 58 | INT-021 | A long rider name with accents and punctuation is shown without hiding the assign buttons | Smoke + regression |
-| 59 | INT-007 | ASSIGN TO DRIVER hands a waiting ride to another driver, and it leaves the queue | Skipped: Waiting on the developer / a signed-in second driver: the Assign Driver list does not offer 'Automation Driver 2' (id 3355) even with the account on d |
+| 59 | INT-007 | ASSIGN TO DRIVER hands a waiting ride to another driver, whose name then shows on the ride's card | Skipped: Unstable, needs investigation: handing a WAITING ride to Automation Driver 2 through the app worked once (the card then named Driver 2) but on later r |
 | 60 | INT-022 | The largest party the rider app allows (75) is shown correctly, and one more (76) is refused by the Rider API | Smoke + regression |
 | 61 | INT-023 | An off-duty driver can see and take a waiting ride, and starting the trip puts the driver back on duty | Regression only |
 | 62 | INT-017 | A ride that belongs to another driver can be taken over with ASSIGN TO SELF and CONFIRM, and CANCEL leaves it where it was | Regression only |
@@ -136,7 +136,7 @@ Collected from the test source on 2026-11-23. Repository: `tms-driverapp-e2e-tes
 | # | IDs | Test | Suites |
 |---|---|---|---|
 | 73 | HOME-004 | A second ride can be added once the trip has started; Home then counts the stops of both rides | Smoke + regression |
-| 74 | TRIPV-010 | With two rides, 'Go here instead' on a later stop asks for confirmation; CANCEL changes nothing and CONFIRM makes it the next stop | Smoke + regression |
+| 74 | TRIPV-010 | With two rides, 'Go here instead' on a later stop asks for confirmation; CANCEL changes nothing and CONFIRM moves it earlier in the route | Smoke + regression |
 | 75 | HOME-011 | When one of two rides is cancelled, Home counts only the stops left | Regression only |
 
 ## T7 App lifecycle
